@@ -7,6 +7,51 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 const SECTIONS = ["hero", "benefits", "how_it_works", "faq", "final_cta"] as const;
 type Section = (typeof SECTIONS)[number];
 
+// Deterministic mock used when LOVABLE_API_KEY is missing so the storefront
+// editor's "Regenerate" buttons keep working in demo mode. Mirrors the shape
+// the AI tool returns for each section.
+function buildSectionMock(
+  section: Section,
+  ctx: { brand?: { brand_name?: string | null; tone?: string | null; positioning?: string | null } | null; biz?: { name?: string | null; target_audience?: string | null; desired_result?: string | null; description?: string | null } | null },
+): unknown {
+  const brandName = ctx.brand?.brand_name || ctx.biz?.name || "Your business";
+  const audience = ctx.biz?.target_audience || "your customers";
+  const result = ctx.biz?.desired_result || "the outcome you actually want";
+  switch (section) {
+    case "hero":
+      return {
+        headline: `${brandName} — ${result}.`,
+        sub: `Built for ${audience}. ${ctx.brand?.positioning || "Skip the marketing learning curve."}`,
+        cta: "Get started",
+      };
+    case "benefits":
+      return [
+        { title: "Set up in minutes, not weeks", body: "From idea to ready-to-launch in a single workflow." },
+        { title: "Stays on-brand automatically", body: `Every asset matches ${brandName}'s tone and visuals — no manual tweaks.` },
+        { title: "Always know your next move", body: "AI recommendations surface what's working and what to fix." },
+      ];
+    case "how_it_works":
+      return [
+        { step: "Tell us about your business", body: "One short input — a description, link, or product photo — is all we need." },
+        { step: "Wazeer AI builds the kit", body: "Storefront, content, ads, and emails drafted for your review in minutes." },
+        { step: "Approve and launch", body: "Edit anything, then go live with one click." },
+      ];
+    case "faq":
+      return [
+        { q: "How long does setup take?", a: "Most users have a complete kit ready within minutes of finishing the wizard." },
+        { q: "Can I edit the AI output?", a: "Yes. Every section, image, email, and ad is fully editable." },
+        { q: "Will my ads launch automatically?", a: "Never. Ads, emails, and posts always need your explicit approval." },
+        { q: "What if I don't have testimonials yet?", a: "Wazeer AI never invents fake reviews. Add real customer quotes when you have them." },
+      ];
+    case "final_cta":
+      return {
+        headline: `Ready to launch ${brandName}?`,
+        sub: `Everything is in place. Approve, edit, then publish.`,
+        cta: "Start selling with AI",
+      };
+  }
+}
+
 async function loadStorefront(supabase: any, business_id: string) {
   const { data, error } = await supabase
     .from("storefronts")
@@ -93,7 +138,20 @@ export const regenerateStorefrontSection = createServerFn({ method: "POST" })
         .maybeSingle();
 
       const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-      if (!LOVABLE_API_KEY) throw new Error("AI gateway not configured");
+
+      // Demo-mode fallback: if the AI provider isn't configured, return a
+      // deterministic mock section shaped like the real tool's output so the
+      // editor flow stays usable without provider credentials.
+      if (!LOVABLE_API_KEY) {
+        const content = buildSectionMock(data.section, { brand, biz });
+        const next = { ...(sf.content_json as Record<string, unknown>), [data.section]: content };
+        const { error: upErr } = await context.supabase
+          .from("storefronts")
+          .update({ content_json: next })
+          .eq("id", sf.id);
+        if (upErr) throw new Error(upErr.message);
+        return { ok: true, section: data.section, content, provider: "mock" as const };
+      }
 
       const sectionSchemas: Record<Section, any> = {
         hero: { type: "object", properties: { headline: { type: "string" }, sub: { type: "string" }, cta: { type: "string" } }, required: ["headline", "sub", "cta"], additionalProperties: false },
@@ -158,7 +216,7 @@ Extra instructions: ${data.brief || "(none)"}`;
         .update({ content_json: next })
         .eq("id", sf.id);
       if (upErr) throw new Error(upErr.message);
-      return { ok: true, section: data.section, content };
+      return { ok: true, section: data.section, content, provider: "lovable_ai" as const };
     } catch (err) {
       await refundCredits(workspace_id, "storefront_section_regenerate", { business_id: data.business_id });
       throw err;

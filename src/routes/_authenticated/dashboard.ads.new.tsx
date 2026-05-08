@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { confirmDialog } from "@/components/ui/confirm";
 import { Check, ChevronLeft, ChevronRight, Image as ImageIcon, Loader2, X, Rocket } from "lucide-react";
 import { toast } from "sonner";
 
@@ -69,6 +70,18 @@ function NewCampaignWizard() {
   };
 
   const launch = async () => {
+    // Risky action — explicit approval required. Show the user the actual
+    // spend they're committing to before anything is written.
+    const productLabel = productId === "brand"
+      ? "brand awareness"
+      : products.find((p) => p.id === productId)?.title ?? "your product";
+    const ok = await confirmDialog({
+      title: "Save campaign as draft?",
+      description: `"${name}" will run for ${days} days at $${budgetDaily.toFixed(2)}/day — total budget $${total.toFixed(2)}. The campaign saves as a DRAFT and will not spend money until you connect Meta and explicitly publish it. Promoting: ${productLabel}. Locations: ${locations.join(", ")}.`,
+      confirmText: "Save as draft",
+    });
+    if (!ok) return;
+
     setLaunching(true);
     try {
       const { data: ws } = await supabase.from("workspaces").select("id").limit(1).maybeSingle();
@@ -88,10 +101,10 @@ function NewCampaignWizard() {
         ad_variants: variants,
       }).select("id").single();
       if (error) throw error;
-      toast.success("Campaign created!");
+      toast.success("Campaign saved as draft. Connect Meta to launch.");
       navigate({ to: "/dashboard/ads/$id", params: { id: data.id } });
     } catch (e: any) {
-      toast.error(e.message ?? "Failed to launch");
+      toast.error(e.message ?? "Failed to save campaign");
     } finally {
       setLaunching(false);
     }
@@ -269,11 +282,14 @@ function NewCampaignWizard() {
               <Row label="Total budget" value={`$${total.toFixed(2)}`} />
               <Row label="Ad variants" value={String(variants.length)} />
             </div>
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800">
+              Saves as a draft. Wazeer AI will never charge your ad account until you connect Meta and explicitly approve the launch.
+            </div>
             <div className="flex gap-2 pt-3 border-t">
               <Button variant="outline" onClick={() => setShowMetaModal(true)}>Connect Meta Account</Button>
               <Button onClick={launch} disabled={launching} className="flex-1">
                 {launching ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Rocket className="h-4 w-4 mr-1" />}
-                Launch Campaign
+                Approve &amp; save campaign
               </Button>
             </div>
           </div>

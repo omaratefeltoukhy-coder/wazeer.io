@@ -15,6 +15,7 @@ import {
 import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from "@/components/ui/select";
+import { confirmDialog } from "@/components/ui/confirm";
 import { toast } from "sonner";
 import { AlertTriangle, Loader2, Sparkles, CheckCircle2, Send, Calendar, Trash2 } from "lucide-react";
 import {
@@ -200,7 +201,18 @@ function PostsBusinessPage() {
                   )}
                   {p.approval_status === "approved" && p.status !== "published" && (
                     <>
-                      <Button size="sm" onClick={() => publish.mutate(p.id)} disabled={publish.isPending}>
+                      <Button
+                        size="sm"
+                        onClick={async () => {
+                          const ok = await confirmDialog({
+                            title: `Publish to ${p.platform}?`,
+                            description: `This will publish the post immediately${p.platform === "facebook" || p.platform === "instagram" ? " (demo mode — Meta connection writes a mock external_post_id)" : ""}. You can't unpublish from here once it's live.`,
+                            confirmText: "Publish now",
+                          });
+                          if (ok) publish.mutate(p.id);
+                        }}
+                        disabled={publish.isPending}
+                      >
                         {publish.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                         <span className="ml-1">Publish</span>
                       </Button>
