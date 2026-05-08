@@ -1,0 +1,24 @@
+# Normalize all text files to LF in the repo so prettier and other tools
+# don't treat Windows CRLF checkouts as diffs. Working tree on Windows can
+# still use CRLF — git handles the conversion on checkout / commit.
+* text=auto eol=lf
+
+# Lockfiles and generated TS files: explicit LF.
+package-lock.json text eol=lf
+bun.lock text eol=lf
+src/routeTree.gen.ts text eol=lf
+src/integrations/supabase/types.ts text eol=lf
+
+# Binary assets: never touch.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.mp4 binary
+*.pdf binary

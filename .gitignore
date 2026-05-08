@@ -20,6 +20,12 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Environment variables — never commit secrets or project keys.
+# Lovable Cloud regenerates these locally during dev; never check them in.
+.env
+.env.*
+!.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
