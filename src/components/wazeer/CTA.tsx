@@ -21,7 +21,7 @@ export function CTA() {
               </Link>
             </Button>
             <Button asChild size="lg" variant="ghost">
-              <Link to="/signup">Generate my business</Link>
+              <Link to="/dashboard/new">Generate my business</Link>
             </Button>
           </div>
         </div>

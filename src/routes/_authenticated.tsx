@@ -1,7 +1,8 @@
-import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link, useNavigate, useRouterState, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEntitlements } from "@/hooks/useEntitlements";
+import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/wazeer/Logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -12,6 +13,18 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
+  beforeLoad: async ({ location }) => {
+    // Skip on the server — Supabase session lives in localStorage on the client.
+    if (typeof window === "undefined") return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      // Defense-in-depth: never capture /login or /signup as the redirect target.
+      const target = location.pathname.startsWith("/login") || location.pathname.startsWith("/signup")
+        ? "/dashboard"
+        : location.href;
+      throw redirect({ to: "/login", search: { redirect: target } });
+    }
+  },
   component: AuthenticatedLayout,
 });
 
@@ -131,18 +144,15 @@ function AuthenticatedLayout() {
   const { data: ent } = useEntitlements();
   const [open, setOpen] = useState(false);
 
-  if (loading) {
+  // beforeLoad guarantees a session before this renders, but `useAuth` hydrates
+  // asynchronously from the auth state listener. Show a loading state until both
+  // the listener settles and the user object is present — never call navigate here.
+  if (loading || !user) {
     return (
       <div className="min-h-screen grid place-items-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
-  }
-
-  if (!user) {
-    const safeRedirect = pathname.startsWith("/login") || pathname.startsWith("/signup") ? "/dashboard" : pathname;
-    navigate({ to: "/login", search: { redirect: safeRedirect }, replace: true });
-    return null;
   }
 
   const handleSignOut = async () => { await signOut(); navigate({ to: "/" }); };

@@ -104,7 +104,7 @@ export function Hero() {
                 )}
                 <div className="flex-1" />
                 <Button asChild className="bg-brand-gradient text-primary-foreground shadow-glow hover:opacity-95">
-                  <Link to="/signup">
+                  <Link to="/dashboard/new">
                     <Wand2 className="h-4 w-4" /> Generate my business
                   </Link>
                 </Button>

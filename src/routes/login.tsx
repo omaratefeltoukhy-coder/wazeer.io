@@ -16,6 +16,11 @@ export const Route = createFileRoute("/login")({
     const safe = r.startsWith("/") && !r.startsWith("/login") && !r.startsWith("/signup") ? r : "/dashboard";
     return { redirect: safe };
   },
+  beforeLoad: async ({ search }) => {
+    if (typeof window === "undefined") return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) throw redirect({ to: search.redirect });
+  },
 });
 
 function LoginPage() {
