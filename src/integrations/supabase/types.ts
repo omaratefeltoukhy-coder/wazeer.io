@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_content: {
+        Row: {
+          business_id: string | null
+          content_type: string
+          created_at: string
+          format: string | null
+          goal: string | null
+          id: string
+          metadata: Json
+          product_id: string | null
+          prompt: string | null
+          result_url: string | null
+          script_text: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          business_id?: string | null
+          content_type: string
+          created_at?: string
+          format?: string | null
+          goal?: string | null
+          id?: string
+          metadata?: Json
+          product_id?: string | null
+          prompt?: string | null
+          result_url?: string | null
+          script_text?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          business_id?: string | null
+          content_type?: string
+          created_at?: string
+          format?: string | null
+          goal?: string | null
+          id?: string
+          metadata?: Json
+          product_id?: string | null
+          prompt?: string | null
+          result_url?: string | null
+          script_text?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       ai_recommendations: {
         Row: {
           action_json: Json | null
