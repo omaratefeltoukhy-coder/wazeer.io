@@ -180,6 +180,14 @@ function StorefrontEditor() {
             <Label>CTA label</Label>
             <Input value={content.hero?.cta ?? ""} onChange={(e) => setContent((c) => ({ ...c, hero: { ...(c.hero ?? { headline: "", sub: "", cta: "" }), cta: e.target.value } }))} />
           </div>
+          {(content.hero as any)?.image_url ? (
+            <div className="rounded-xl border overflow-hidden">
+              <img src={(content.hero as any).image_url} alt="" className="w-full h-40 object-cover" />
+            </div>
+          ) : null}
+          <Link to="/dashboard/images/$businessId" params={{ businessId }} className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+            <Sparkles className="h-3 w-3" /> Generate a hero image →
+          </Link>
         </div>
       </SectionShell>
 
