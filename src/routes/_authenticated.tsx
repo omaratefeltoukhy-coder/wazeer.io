@@ -23,6 +23,7 @@ const nav = [
   { to: "/dashboard/posts", label: "Meta Posts", icon: Megaphone },
   { to: "/dashboard/ads", label: "Meta Ads", icon: Target },
   { to: "/dashboard/integrations/meta", label: "Integrations", icon: Link2 },
+  { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/dashboard/billing", label: "Plans & Credits", icon: CreditCard },
   { to: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
