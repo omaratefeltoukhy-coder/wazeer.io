@@ -20,6 +20,7 @@ import { Route as ApiPublicBillingWebhookRouteImport } from './routes/api/public
 import { Route as AuthenticatedDashboardVideosRouteImport } from './routes/_authenticated/dashboard.videos'
 import { Route as AuthenticatedDashboardUgcRouteImport } from './routes/_authenticated/dashboard.ugc'
 import { Route as AuthenticatedDashboardStorefrontRouteImport } from './routes/_authenticated/dashboard.storefront'
+import { Route as AuthenticatedDashboardSettingsRouteImport } from './routes/_authenticated/dashboard.settings'
 import { Route as AuthenticatedDashboardPostsRouteImport } from './routes/_authenticated/dashboard.posts'
 import { Route as AuthenticatedDashboardNewRouteImport } from './routes/_authenticated/dashboard.new'
 import { Route as AuthenticatedDashboardImagesRouteImport } from './routes/_authenticated/dashboard.images'
@@ -96,6 +97,12 @@ const AuthenticatedDashboardStorefrontRoute =
   AuthenticatedDashboardStorefrontRouteImport.update({
     id: '/storefront',
     path: '/storefront',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardSettingsRoute =
+  AuthenticatedDashboardSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
 const AuthenticatedDashboardPostsRoute =
@@ -235,6 +242,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/images': typeof AuthenticatedDashboardImagesRouteWithChildren
   '/dashboard/new': typeof AuthenticatedDashboardNewRoute
   '/dashboard/posts': typeof AuthenticatedDashboardPostsRouteWithChildren
+  '/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
   '/dashboard/storefront': typeof AuthenticatedDashboardStorefrontRouteWithChildren
   '/dashboard/ugc': typeof AuthenticatedDashboardUgcRouteWithChildren
   '/dashboard/videos': typeof AuthenticatedDashboardVideosRouteWithChildren
@@ -267,6 +275,7 @@ export interface FileRoutesByTo {
   '/dashboard/images': typeof AuthenticatedDashboardImagesRouteWithChildren
   '/dashboard/new': typeof AuthenticatedDashboardNewRoute
   '/dashboard/posts': typeof AuthenticatedDashboardPostsRouteWithChildren
+  '/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
   '/dashboard/storefront': typeof AuthenticatedDashboardStorefrontRouteWithChildren
   '/dashboard/ugc': typeof AuthenticatedDashboardUgcRouteWithChildren
   '/dashboard/videos': typeof AuthenticatedDashboardVideosRouteWithChildren
@@ -301,6 +310,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/images': typeof AuthenticatedDashboardImagesRouteWithChildren
   '/_authenticated/dashboard/new': typeof AuthenticatedDashboardNewRoute
   '/_authenticated/dashboard/posts': typeof AuthenticatedDashboardPostsRouteWithChildren
+  '/_authenticated/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
   '/_authenticated/dashboard/storefront': typeof AuthenticatedDashboardStorefrontRouteWithChildren
   '/_authenticated/dashboard/ugc': typeof AuthenticatedDashboardUgcRouteWithChildren
   '/_authenticated/dashboard/videos': typeof AuthenticatedDashboardVideosRouteWithChildren
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
     | '/dashboard/images'
     | '/dashboard/new'
     | '/dashboard/posts'
+    | '/dashboard/settings'
     | '/dashboard/storefront'
     | '/dashboard/ugc'
     | '/dashboard/videos'
@@ -367,6 +378,7 @@ export interface FileRouteTypes {
     | '/dashboard/images'
     | '/dashboard/new'
     | '/dashboard/posts'
+    | '/dashboard/settings'
     | '/dashboard/storefront'
     | '/dashboard/ugc'
     | '/dashboard/videos'
@@ -400,6 +412,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/images'
     | '/_authenticated/dashboard/new'
     | '/_authenticated/dashboard/posts'
+    | '/_authenticated/dashboard/settings'
     | '/_authenticated/dashboard/storefront'
     | '/_authenticated/dashboard/ugc'
     | '/_authenticated/dashboard/videos'
@@ -504,6 +517,13 @@ declare module '@tanstack/react-router' {
       path: '/storefront'
       fullPath: '/dashboard/storefront'
       preLoaderRoute: typeof AuthenticatedDashboardStorefrontRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/settings': {
+      id: '/_authenticated/dashboard/settings'
+      path: '/settings'
+      fullPath: '/dashboard/settings'
+      preLoaderRoute: typeof AuthenticatedDashboardSettingsRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
     '/_authenticated/dashboard/posts': {
@@ -809,6 +829,7 @@ interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardImagesRoute: typeof AuthenticatedDashboardImagesRouteWithChildren
   AuthenticatedDashboardNewRoute: typeof AuthenticatedDashboardNewRoute
   AuthenticatedDashboardPostsRoute: typeof AuthenticatedDashboardPostsRouteWithChildren
+  AuthenticatedDashboardSettingsRoute: typeof AuthenticatedDashboardSettingsRoute
   AuthenticatedDashboardStorefrontRoute: typeof AuthenticatedDashboardStorefrontRouteWithChildren
   AuthenticatedDashboardUgcRoute: typeof AuthenticatedDashboardUgcRouteWithChildren
   AuthenticatedDashboardVideosRoute: typeof AuthenticatedDashboardVideosRouteWithChildren
@@ -832,6 +853,7 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
     AuthenticatedDashboardNewRoute: AuthenticatedDashboardNewRoute,
     AuthenticatedDashboardPostsRoute:
       AuthenticatedDashboardPostsRouteWithChildren,
+    AuthenticatedDashboardSettingsRoute: AuthenticatedDashboardSettingsRoute,
     AuthenticatedDashboardStorefrontRoute:
       AuthenticatedDashboardStorefrontRouteWithChildren,
     AuthenticatedDashboardUgcRoute: AuthenticatedDashboardUgcRouteWithChildren,
