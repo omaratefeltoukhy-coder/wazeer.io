@@ -125,16 +125,8 @@ async function handleSubscriptionCanceled(data: any, env: PaddleEnv) {
     .eq("paddle_subscription_id", id)
     .eq("environment", env);
 
-  if (workspaceId) {
-    await supabaseAdmin.from("billing_events").insert({
-      workspace_id: workspaceId,
-      provider: "paddle",
-      event_type: "subscription.canceled",
-      external_event_id: id,
-      payload_json: data as never,
-      processed_at: new Date().toISOString(),
-    });
-  }
+  // billing_events row is recorded centrally by the POST handler for idempotency.
+
 }
 
 async function handleTransactionCompleted(data: any, env: PaddleEnv) {
@@ -181,14 +173,8 @@ async function handleTransactionCompleted(data: any, env: PaddleEnv) {
     } as never,
   });
 
-  await supabaseAdmin.from("billing_events").insert({
-    workspace_id: workspaceId,
-    provider: "paddle",
-    event_type: "transaction.completed",
-    external_event_id: id,
-    payload_json: data as never,
-    processed_at: new Date().toISOString(),
-  });
+  // billing_events row is recorded centrally by the POST handler for idempotency.
+
 }
 
 export const Route = createFileRoute("/api/public/payments/webhook")({
@@ -199,6 +185,31 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
         const env = (url.searchParams.get("env") || "sandbox") as PaddleEnv;
         try {
           const event = await verifyWebhook(request, env);
+
+          // Idempotency: short-circuit if we've already processed this event id.
+          const eventId = (event as any).eventId ?? (event as any).notification_id ?? null;
+          if (eventId) {
+            const { data: existing } = await supabaseAdmin
+              .from("billing_events")
+              .select("id")
+              .eq("external_event_id", eventId)
+              .maybeSingle();
+            if (existing) {
+              return Response.json({ received: true, duplicate: true });
+            }
+            // Reserve the event id immediately so concurrent retries collide on the unique index.
+            const { error: reserveErr } = await supabaseAdmin.from("billing_events").insert({
+              provider: "paddle",
+              event_type: event.eventType,
+              external_event_id: eventId,
+              payload_json: event.data as never,
+              processed_at: new Date().toISOString(),
+            });
+            if (reserveErr && /duplicate key|unique/i.test(reserveErr.message)) {
+              return Response.json({ received: true, duplicate: true });
+            }
+          }
+
           switch (event.eventType) {
             case EventName.SubscriptionCreated:
             case EventName.SubscriptionUpdated:
