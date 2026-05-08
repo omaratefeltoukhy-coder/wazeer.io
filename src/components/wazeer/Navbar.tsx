@@ -23,12 +23,14 @@ export function Navbar() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <Link to="/login"><Button variant="ghost" size="sm" className="hidden sm:inline-flex">Sign in</Button></Link>
-            <Link to="/signup">
-              <Button size="sm" className="bg-foreground text-background hover:opacity-90">
+            <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+              <Link to="/login">Sign in</Link>
+            </Button>
+            <Button asChild size="sm" className="bg-foreground text-background hover:opacity-90">
+              <Link to="/signup">
                 Start selling with AI
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
       </div>

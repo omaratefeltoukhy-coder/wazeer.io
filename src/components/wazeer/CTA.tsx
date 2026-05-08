@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 export function CTA() {
   return (
@@ -14,10 +15,14 @@ export function CTA() {
             Join thousands of solopreneurs, creators, and small businesses launching faster with Wazeer AI.
           </p>
           <div className="mt-8 flex items-center justify-center gap-3">
-            <Button size="lg" className="bg-brand-gradient text-primary-foreground shadow-glow">
-              Start selling with AI <ArrowRight className="h-4 w-4" />
+            <Button asChild size="lg" className="bg-brand-gradient text-primary-foreground shadow-glow">
+              <Link to="/signup">
+                Start selling with AI <ArrowRight className="h-4 w-4" />
+              </Link>
             </Button>
-            <Button size="lg" variant="ghost">Generate my business</Button>
+            <Button asChild size="lg" variant="ghost">
+              <Link to="/signup">Generate my business</Link>
+            </Button>
           </div>
         </div>
       </div>
