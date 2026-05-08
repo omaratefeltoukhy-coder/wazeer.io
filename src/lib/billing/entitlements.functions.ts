@@ -19,7 +19,7 @@ export const getEntitlements = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ workspace_id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     try {
-      const { supabase, userId } = context;
+      const { supabase, userId } = (context ?? {}) as Record<string, any>;
       if (!supabase || !userId) return fallbackEntitlements;
       // Verify the caller is a member of this workspace
       const { data: m, error: memberError } = await supabase
