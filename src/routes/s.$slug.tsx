@@ -86,6 +86,9 @@ function PublicStorefront() {
             <span className="text-sm text-muted-foreground">{fmtPrice(offer.price, offer.currency, offer.billing_interval)}</span>
           )}
         </div>
+        {sf.hero?.image_url && (
+          <img src={sf.hero.image_url} alt="" className="mt-12 rounded-2xl border w-full max-w-3xl mx-auto" loading="lazy" />
+        )}
       </section>
 
       {/* Benefits */}
