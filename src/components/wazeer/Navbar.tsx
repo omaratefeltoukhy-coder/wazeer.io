@@ -1,5 +1,6 @@
 import { Logo } from "./Logo";
 import { Button } from "@/components/ui/button";
+import { Link } from "@tanstack/react-router";
 
 const links = [
   { href: "#how", label: "How it works" },
