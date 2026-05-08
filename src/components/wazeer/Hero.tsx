@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, Upload, Wand2, ShoppingBag, Video, Mail, Megaphone, BarChart3 } from "lucide-react";
+import { ArrowRight, Sparkles, Upload, Wand2, ShoppingBag, Video, Mail, Megaphone, BarChart3, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useRef, useState } from "react";
+import { toast } from "sonner";
 import heroGlow from "@/assets/hero-glow.jpg";
 
 const previewChips = [
