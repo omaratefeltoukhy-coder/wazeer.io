@@ -48,8 +48,6 @@ async function loadBrandContext(supabase: any, business_id: string) {
   };
 }
 
-export const generateImage = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
 const GenSchema = z.object({
   business_id: z.string().uuid(),
   type: z.enum(TYPES),
