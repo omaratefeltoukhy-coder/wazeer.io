@@ -29,7 +29,7 @@ export const PLANS: Record<PlanId, Plan> = {
     name: "Free Trial",
     price_usd: 0,
     credits_per_month: 100,
-    badge: "14 days",
+    badge: "7 days",
     features: ["storefront", "ai_images", "ugc_scripts", "email_campaigns", "analytics", "recommendations"],
     caps: { ai_images: 20, ugc_scripts: 5, email_campaigns: 2 },
   },
