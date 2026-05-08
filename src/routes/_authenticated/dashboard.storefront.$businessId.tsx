@@ -118,13 +118,21 @@ function StorefrontEditor() {
       setStatus(res.status);
       toast.success(action === "publish" ? "Storefront published" : "Storefront unpublished");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Publish failed");
+      const msg = e instanceof Error ? e.message : "Publish failed";
+      if (/plan|upgrade|entitlement/i.test(msg)) {
+        toast.error(msg, {
+          action: { label: "Upgrade", onClick: () => navigate({ to: "/dashboard/billing" }) },
+        });
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setPublishing(false);
     }
   };
 
   const publicUrl = useMemo(() => (slug ? `/s/${slug}` : ""), [slug]);
+  const displayHost = typeof window !== "undefined" ? window.location.host : "";
 
   if (loading) {
     return (
@@ -257,7 +265,7 @@ function StorefrontEditor() {
 
       <div className="sticky bottom-4 z-10 flex flex-wrap items-center justify-between gap-2 rounded-2xl border bg-card/95 backdrop-blur px-4 py-3 shadow-elevated">
         <div className="text-xs text-muted-foreground inline-flex items-center gap-2">
-          <Globe className="h-3.5 w-3.5" /> {publicUrl ? `wazeer.ai${publicUrl}` : "Not yet published"}
+          <Globe className="h-3.5 w-3.5" /> {publicUrl ? `${displayHost}${publicUrl}` : "Not yet published"}
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={save} disabled={saving}>
