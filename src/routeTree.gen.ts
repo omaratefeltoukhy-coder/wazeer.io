@@ -17,6 +17,7 @@ import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDashboardStorefrontRouteImport } from './routes/_authenticated/dashboard.storefront'
 import { Route as AuthenticatedDashboardNewRouteImport } from './routes/_authenticated/dashboard.new'
+import { Route as AuthenticatedDashboardImagesRouteImport } from './routes/_authenticated/dashboard.images'
 import { Route as AuthenticatedDashboardBillingRouteImport } from './routes/_authenticated/dashboard.billing'
 import { Route as AuthenticatedDashboardStorefrontBusinessIdRouteImport } from './routes/_authenticated/dashboard.storefront.$businessId'
 
@@ -61,6 +62,12 @@ const AuthenticatedDashboardNewRoute =
     path: '/new',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardImagesRoute =
+  AuthenticatedDashboardImagesRouteImport.update({
+    id: '/images',
+    path: '/images',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardBillingRoute =
   AuthenticatedDashboardBillingRouteImport.update({
     id: '/billing',
@@ -81,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/s/$slug': typeof SSlugRoute
   '/dashboard/billing': typeof AuthenticatedDashboardBillingRoute
+  '/dashboard/images': typeof AuthenticatedDashboardImagesRoute
   '/dashboard/new': typeof AuthenticatedDashboardNewRoute
   '/dashboard/storefront': typeof AuthenticatedDashboardStorefrontRouteWithChildren
   '/dashboard/storefront/$businessId': typeof AuthenticatedDashboardStorefrontBusinessIdRoute
@@ -92,6 +100,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/s/$slug': typeof SSlugRoute
   '/dashboard/billing': typeof AuthenticatedDashboardBillingRoute
+  '/dashboard/images': typeof AuthenticatedDashboardImagesRoute
   '/dashboard/new': typeof AuthenticatedDashboardNewRoute
   '/dashboard/storefront': typeof AuthenticatedDashboardStorefrontRouteWithChildren
   '/dashboard/storefront/$businessId': typeof AuthenticatedDashboardStorefrontBusinessIdRoute
@@ -105,6 +114,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/s/$slug': typeof SSlugRoute
   '/_authenticated/dashboard/billing': typeof AuthenticatedDashboardBillingRoute
+  '/_authenticated/dashboard/images': typeof AuthenticatedDashboardImagesRoute
   '/_authenticated/dashboard/new': typeof AuthenticatedDashboardNewRoute
   '/_authenticated/dashboard/storefront': typeof AuthenticatedDashboardStorefrontRouteWithChildren
   '/_authenticated/dashboard/storefront/$businessId': typeof AuthenticatedDashboardStorefrontBusinessIdRoute
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/s/$slug'
     | '/dashboard/billing'
+    | '/dashboard/images'
     | '/dashboard/new'
     | '/dashboard/storefront'
     | '/dashboard/storefront/$businessId'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/s/$slug'
     | '/dashboard/billing'
+    | '/dashboard/images'
     | '/dashboard/new'
     | '/dashboard/storefront'
     | '/dashboard/storefront/$businessId'
@@ -141,6 +153,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/s/$slug'
     | '/_authenticated/dashboard/billing'
+    | '/_authenticated/dashboard/images'
     | '/_authenticated/dashboard/new'
     | '/_authenticated/dashboard/storefront'
     | '/_authenticated/dashboard/storefront/$businessId'
@@ -212,6 +225,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardNewRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/images': {
+      id: '/_authenticated/dashboard/images'
+      path: '/images'
+      fullPath: '/dashboard/images'
+      preLoaderRoute: typeof AuthenticatedDashboardImagesRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/billing': {
       id: '/_authenticated/dashboard/billing'
       path: '/billing'
@@ -246,6 +266,7 @@ const AuthenticatedDashboardStorefrontRouteWithChildren =
 
 interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardBillingRoute: typeof AuthenticatedDashboardBillingRoute
+  AuthenticatedDashboardImagesRoute: typeof AuthenticatedDashboardImagesRoute
   AuthenticatedDashboardNewRoute: typeof AuthenticatedDashboardNewRoute
   AuthenticatedDashboardStorefrontRoute: typeof AuthenticatedDashboardStorefrontRouteWithChildren
 }
@@ -253,6 +274,7 @@ interface AuthenticatedDashboardRouteChildren {
 const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
   {
     AuthenticatedDashboardBillingRoute: AuthenticatedDashboardBillingRoute,
+    AuthenticatedDashboardImagesRoute: AuthenticatedDashboardImagesRoute,
     AuthenticatedDashboardNewRoute: AuthenticatedDashboardNewRoute,
     AuthenticatedDashboardStorefrontRoute:
       AuthenticatedDashboardStorefrontRouteWithChildren,
@@ -285,3 +307,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
