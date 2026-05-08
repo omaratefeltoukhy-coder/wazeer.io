@@ -21,6 +21,7 @@ import { Route as AuthenticatedDashboardStorefrontRouteImport } from './routes/_
 import { Route as AuthenticatedDashboardNewRouteImport } from './routes/_authenticated/dashboard.new'
 import { Route as AuthenticatedDashboardImagesRouteImport } from './routes/_authenticated/dashboard.images'
 import { Route as AuthenticatedDashboardBillingRouteImport } from './routes/_authenticated/dashboard.billing'
+import { Route as AuthenticatedDashboardVideosBusinessIdRouteImport } from './routes/_authenticated/dashboard.videos.$businessId'
 import { Route as AuthenticatedDashboardUgcBusinessIdRouteImport } from './routes/_authenticated/dashboard.ugc.$businessId'
 import { Route as AuthenticatedDashboardStorefrontBusinessIdRouteImport } from './routes/_authenticated/dashboard.storefront.$businessId'
 import { Route as AuthenticatedDashboardImagesBusinessIdRouteImport } from './routes/_authenticated/dashboard.images.$businessId'
@@ -90,6 +91,12 @@ const AuthenticatedDashboardBillingRoute =
     path: '/billing',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardVideosBusinessIdRoute =
+  AuthenticatedDashboardVideosBusinessIdRouteImport.update({
+    id: '/$businessId',
+    path: '/$businessId',
+    getParentRoute: () => AuthenticatedDashboardVideosRoute,
+  } as any)
 const AuthenticatedDashboardUgcBusinessIdRoute =
   AuthenticatedDashboardUgcBusinessIdRouteImport.update({
     id: '/$businessId',
@@ -120,10 +127,11 @@ export interface FileRoutesByFullPath {
   '/dashboard/new': typeof AuthenticatedDashboardNewRoute
   '/dashboard/storefront': typeof AuthenticatedDashboardStorefrontRouteWithChildren
   '/dashboard/ugc': typeof AuthenticatedDashboardUgcRouteWithChildren
-  '/dashboard/videos': typeof AuthenticatedDashboardVideosRoute
+  '/dashboard/videos': typeof AuthenticatedDashboardVideosRouteWithChildren
   '/dashboard/images/$businessId': typeof AuthenticatedDashboardImagesBusinessIdRoute
   '/dashboard/storefront/$businessId': typeof AuthenticatedDashboardStorefrontBusinessIdRoute
   '/dashboard/ugc/$businessId': typeof AuthenticatedDashboardUgcBusinessIdRoute
+  '/dashboard/videos/$businessId': typeof AuthenticatedDashboardVideosBusinessIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -136,10 +144,11 @@ export interface FileRoutesByTo {
   '/dashboard/new': typeof AuthenticatedDashboardNewRoute
   '/dashboard/storefront': typeof AuthenticatedDashboardStorefrontRouteWithChildren
   '/dashboard/ugc': typeof AuthenticatedDashboardUgcRouteWithChildren
-  '/dashboard/videos': typeof AuthenticatedDashboardVideosRoute
+  '/dashboard/videos': typeof AuthenticatedDashboardVideosRouteWithChildren
   '/dashboard/images/$businessId': typeof AuthenticatedDashboardImagesBusinessIdRoute
   '/dashboard/storefront/$businessId': typeof AuthenticatedDashboardStorefrontBusinessIdRoute
   '/dashboard/ugc/$businessId': typeof AuthenticatedDashboardUgcBusinessIdRoute
+  '/dashboard/videos/$businessId': typeof AuthenticatedDashboardVideosBusinessIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -154,10 +163,11 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/new': typeof AuthenticatedDashboardNewRoute
   '/_authenticated/dashboard/storefront': typeof AuthenticatedDashboardStorefrontRouteWithChildren
   '/_authenticated/dashboard/ugc': typeof AuthenticatedDashboardUgcRouteWithChildren
-  '/_authenticated/dashboard/videos': typeof AuthenticatedDashboardVideosRoute
+  '/_authenticated/dashboard/videos': typeof AuthenticatedDashboardVideosRouteWithChildren
   '/_authenticated/dashboard/images/$businessId': typeof AuthenticatedDashboardImagesBusinessIdRoute
   '/_authenticated/dashboard/storefront/$businessId': typeof AuthenticatedDashboardStorefrontBusinessIdRoute
   '/_authenticated/dashboard/ugc/$businessId': typeof AuthenticatedDashboardUgcBusinessIdRoute
+  '/_authenticated/dashboard/videos/$businessId': typeof AuthenticatedDashboardVideosBusinessIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -176,6 +186,7 @@ export interface FileRouteTypes {
     | '/dashboard/images/$businessId'
     | '/dashboard/storefront/$businessId'
     | '/dashboard/ugc/$businessId'
+    | '/dashboard/videos/$businessId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -192,6 +203,7 @@ export interface FileRouteTypes {
     | '/dashboard/images/$businessId'
     | '/dashboard/storefront/$businessId'
     | '/dashboard/ugc/$businessId'
+    | '/dashboard/videos/$businessId'
   id:
     | '__root__'
     | '/'
@@ -209,6 +221,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/images/$businessId'
     | '/_authenticated/dashboard/storefront/$businessId'
     | '/_authenticated/dashboard/ugc/$businessId'
+    | '/_authenticated/dashboard/videos/$businessId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -305,6 +318,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardBillingRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/videos/$businessId': {
+      id: '/_authenticated/dashboard/videos/$businessId'
+      path: '/$businessId'
+      fullPath: '/dashboard/videos/$businessId'
+      preLoaderRoute: typeof AuthenticatedDashboardVideosBusinessIdRouteImport
+      parentRoute: typeof AuthenticatedDashboardVideosRoute
+    }
     '/_authenticated/dashboard/ugc/$businessId': {
       id: '/_authenticated/dashboard/ugc/$businessId'
       path: '/$businessId'
@@ -374,13 +394,28 @@ const AuthenticatedDashboardUgcRouteWithChildren =
     AuthenticatedDashboardUgcRouteChildren,
   )
 
+interface AuthenticatedDashboardVideosRouteChildren {
+  AuthenticatedDashboardVideosBusinessIdRoute: typeof AuthenticatedDashboardVideosBusinessIdRoute
+}
+
+const AuthenticatedDashboardVideosRouteChildren: AuthenticatedDashboardVideosRouteChildren =
+  {
+    AuthenticatedDashboardVideosBusinessIdRoute:
+      AuthenticatedDashboardVideosBusinessIdRoute,
+  }
+
+const AuthenticatedDashboardVideosRouteWithChildren =
+  AuthenticatedDashboardVideosRoute._addFileChildren(
+    AuthenticatedDashboardVideosRouteChildren,
+  )
+
 interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardBillingRoute: typeof AuthenticatedDashboardBillingRoute
   AuthenticatedDashboardImagesRoute: typeof AuthenticatedDashboardImagesRouteWithChildren
   AuthenticatedDashboardNewRoute: typeof AuthenticatedDashboardNewRoute
   AuthenticatedDashboardStorefrontRoute: typeof AuthenticatedDashboardStorefrontRouteWithChildren
   AuthenticatedDashboardUgcRoute: typeof AuthenticatedDashboardUgcRouteWithChildren
-  AuthenticatedDashboardVideosRoute: typeof AuthenticatedDashboardVideosRoute
+  AuthenticatedDashboardVideosRoute: typeof AuthenticatedDashboardVideosRouteWithChildren
 }
 
 const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
@@ -392,7 +427,8 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
     AuthenticatedDashboardStorefrontRoute:
       AuthenticatedDashboardStorefrontRouteWithChildren,
     AuthenticatedDashboardUgcRoute: AuthenticatedDashboardUgcRouteWithChildren,
-    AuthenticatedDashboardVideosRoute: AuthenticatedDashboardVideosRoute,
+    AuthenticatedDashboardVideosRoute:
+      AuthenticatedDashboardVideosRouteWithChildren,
   }
 
 const AuthenticatedDashboardRouteWithChildren =
