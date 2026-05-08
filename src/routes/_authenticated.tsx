@@ -8,28 +8,53 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   LayoutDashboard, ShoppingBag, Image as ImageIcon, Video, Mail, Megaphone, Target, Link2,
   BarChart3, Settings, LogOut, Plus, Loader2, CreditCard, Sparkles, FileVideo, Workflow, Users, Menu, Package,
+  DollarSign, Receipt, Wallet,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
 });
 
-const nav = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/dashboard/products", label: "Products", icon: Package },
-  { to: "/dashboard/storefront", label: "Storefront", icon: ShoppingBag },
-  { to: "/dashboard/images", label: "AI Images", icon: ImageIcon },
-  { to: "/dashboard/ugc", label: "UGC Scripts", icon: FileVideo },
-  { to: "/dashboard/videos", label: "AI Videos", icon: Video },
-  { to: "/dashboard/emails", label: "Emails", icon: Mail },
-  { to: "/dashboard/automations", label: "Automations", icon: Workflow },
-  { to: "/dashboard/contacts", label: "Contacts", icon: Users },
-  { to: "/dashboard/posts", label: "Meta Posts", icon: Megaphone },
-  { to: "/dashboard/ads", label: "Meta Ads", icon: Target },
-  { to: "/dashboard/integrations/meta", label: "Integrations", icon: Link2 },
-  { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
-  { to: "/dashboard/billing", label: "Plans & Credits", icon: CreditCard },
-  { to: "/dashboard/settings", label: "Settings", icon: Settings },
+type NavItem = { to: string; label: string; icon: typeof LayoutDashboard };
+type NavSection = { heading?: string; items: NavItem[] };
+
+const sections: NavSection[] = [
+  {
+    items: [
+      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/dashboard/products", label: "Products", icon: Package },
+      { to: "/dashboard/storefront", label: "Storefront", icon: ShoppingBag },
+    ],
+  },
+  {
+    heading: "Money",
+    items: [
+      { to: "/dashboard/earnings", label: "Earnings", icon: DollarSign },
+      { to: "/dashboard/transactions", label: "Transactions", icon: Receipt },
+      { to: "/dashboard/payouts", label: "Payouts", icon: Wallet },
+    ],
+  },
+  {
+    heading: "Marketing",
+    items: [
+      { to: "/dashboard/images", label: "AI Images", icon: ImageIcon },
+      { to: "/dashboard/ugc", label: "UGC Scripts", icon: FileVideo },
+      { to: "/dashboard/videos", label: "AI Videos", icon: Video },
+      { to: "/dashboard/emails", label: "Emails", icon: Mail },
+      { to: "/dashboard/automations", label: "Automations", icon: Workflow },
+      { to: "/dashboard/contacts", label: "Contacts", icon: Users },
+      { to: "/dashboard/posts", label: "Meta Posts", icon: Megaphone },
+      { to: "/dashboard/ads", label: "Meta Ads", icon: Target },
+    ],
+  },
+  {
+    items: [
+      { to: "/dashboard/integrations/meta", label: "Integrations", icon: Link2 },
+      { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
+      { to: "/dashboard/billing", label: "Plans & Credits", icon: CreditCard },
+      { to: "/dashboard/settings", label: "Settings", icon: Settings },
+    ],
+  },
 ];
 
 function NavList({
@@ -55,22 +80,29 @@ function NavList({
       >
         <Plus className="h-4 w-4" /> New business
       </Link>
-      <nav className="mt-6 space-y-1 overflow-y-auto">
-        {nav.map((n) => {
-          const active = pathname === n.to;
-          return (
-            <Link
-              key={n.to}
-              to={n.to}
-              onClick={onNavigate}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
-                active ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
-              }`}
-            >
-              <n.icon className="h-4 w-4" /> {n.label}
-            </Link>
-          );
-        })}
+      <nav className="mt-6 space-y-4 overflow-y-auto">
+        {sections.map((section, idx) => (
+          <div key={idx} className="space-y-1">
+            {section.heading && (
+              <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{section.heading}</div>
+            )}
+            {section.items.map((n) => {
+              const active = pathname === n.to;
+              return (
+                <Link
+                  key={n.to}
+                  to={n.to}
+                  onClick={onNavigate}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                    active ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                  }`}
+                >
+                  <n.icon className="h-4 w-4" /> {n.label}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </nav>
       <div className="mt-auto border-t pt-4 space-y-2">
         {ent && (

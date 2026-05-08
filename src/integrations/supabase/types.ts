@@ -1154,6 +1154,69 @@ export type Database = {
           },
         ]
       }
+      payout_methods: {
+        Row: {
+          created_at: string
+          details: Json
+          id: string
+          is_default: boolean
+          method_type: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json
+          id?: string
+          is_default?: boolean
+          method_type: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json
+          id?: string
+          is_default?: boolean
+          method_type?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
+      payouts: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          paid_date: string | null
+          scheduled_date: string | null
+          status: string
+          workspace_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          paid_date?: string | null
+          scheduled_date?: string | null
+          status?: string
+          workspace_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          paid_date?: string | null
+          scheduled_date?: string | null
+          status?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       performance_snapshots: {
         Row: {
           business_id: string
@@ -1430,6 +1493,42 @@ export type Database = {
           metadata_json?: Json
           reason?: string
           source?: string | null
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          buyer_email: string | null
+          buyer_name: string | null
+          created_at: string
+          currency: string
+          id: string
+          product_id: string | null
+          status: string
+          workspace_id: string
+        }
+        Insert: {
+          amount?: number
+          buyer_email?: string | null
+          buyer_name?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          product_id?: string | null
+          status?: string
+          workspace_id: string
+        }
+        Update: {
+          amount?: number
+          buyer_email?: string | null
+          buyer_name?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          product_id?: string | null
+          status?: string
+          workspace_id?: string
         }
         Relationships: []
       }
