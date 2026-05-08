@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UnsubscribeTokenRouteImport } from './routes/unsubscribe.$token'
 import { Route as SSlugRouteImport } from './routes/s.$slug'
+import { Route as PayCodeRouteImport } from './routes/pay.$code'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard.index'
 import { Route as ApiPublicBillingWebhookRouteImport } from './routes/api/public/billing-webhook'
@@ -94,6 +95,11 @@ const UnsubscribeTokenRoute = UnsubscribeTokenRouteImport.update({
 const SSlugRoute = SSlugRouteImport.update({
   id: '/s/$slug',
   path: '/s/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PayCodeRoute = PayCodeRouteImport.update({
+  id: '/pay/$code',
+  path: '/pay/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -406,6 +412,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
+  '/pay/$code': typeof PayCodeRoute
   '/s/$slug': typeof SSlugRoute
   '/unsubscribe/$token': typeof UnsubscribeTokenRoute
   '/dashboard/ads': typeof AuthenticatedDashboardAdsRouteWithChildren
@@ -463,6 +470,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/pay/$code': typeof PayCodeRoute
   '/s/$slug': typeof SSlugRoute
   '/unsubscribe/$token': typeof UnsubscribeTokenRoute
   '/dashboard/analytics': typeof AuthenticatedDashboardAnalyticsRouteWithChildren
@@ -518,6 +526,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
+  '/pay/$code': typeof PayCodeRoute
   '/s/$slug': typeof SSlugRoute
   '/unsubscribe/$token': typeof UnsubscribeTokenRoute
   '/_authenticated/dashboard/ads': typeof AuthenticatedDashboardAdsRouteWithChildren
@@ -578,6 +587,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/dashboard'
+    | '/pay/$code'
     | '/s/$slug'
     | '/unsubscribe/$token'
     | '/dashboard/ads'
@@ -635,6 +645,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/signup'
+    | '/pay/$code'
     | '/s/$slug'
     | '/unsubscribe/$token'
     | '/dashboard/analytics'
@@ -689,6 +700,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/_authenticated/dashboard'
+    | '/pay/$code'
     | '/s/$slug'
     | '/unsubscribe/$token'
     | '/_authenticated/dashboard/ads'
@@ -748,6 +760,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  PayCodeRoute: typeof PayCodeRoute
   SSlugRoute: typeof SSlugRoute
   UnsubscribeTokenRoute: typeof UnsubscribeTokenRoute
   ApiPublicBillingWebhookRoute: typeof ApiPublicBillingWebhookRoute
@@ -796,6 +809,13 @@ declare module '@tanstack/react-router' {
       path: '/s/$slug'
       fullPath: '/s/$slug'
       preLoaderRoute: typeof SSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pay/$code': {
+      id: '/pay/$code'
+      path: '/pay/$code'
+      fullPath: '/pay/$code'
+      preLoaderRoute: typeof PayCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/dashboard': {
@@ -1500,6 +1520,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  PayCodeRoute: PayCodeRoute,
   SSlugRoute: SSlugRoute,
   UnsubscribeTokenRoute: UnsubscribeTokenRoute,
   ApiPublicBillingWebhookRoute: ApiPublicBillingWebhookRoute,
