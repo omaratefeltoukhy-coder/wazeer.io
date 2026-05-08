@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, Upload, Wand2, ShoppingBag, Video, Mail, Megaphone, BarChart3 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import heroGlow from "@/assets/hero-glow.jpg";
 
@@ -56,12 +57,17 @@ export function Hero() {
                 className="mt-2 w-full resize-none rounded-xl border bg-background px-4 py-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               />
               <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                <Button variant="outline" className="sm:w-auto">
-                  <Upload className="h-4 w-4" /> Upload media
+                <input id="hero-media-upload" type="file" accept="image/*,video/*" className="sr-only" />
+                <Button asChild variant="outline" className="sm:w-auto cursor-pointer">
+                  <label htmlFor="hero-media-upload">
+                    <Upload className="h-4 w-4" /> Upload media
+                  </label>
                 </Button>
                 <div className="flex-1" />
-                <Button className="bg-brand-gradient text-primary-foreground shadow-glow hover:opacity-95">
-                  <Wand2 className="h-4 w-4" /> Generate my business
+                <Button asChild className="bg-brand-gradient text-primary-foreground shadow-glow hover:opacity-95">
+                  <Link to="/signup">
+                    <Wand2 className="h-4 w-4" /> Generate my business
+                  </Link>
                 </Button>
               </div>
             </div>
@@ -96,10 +102,14 @@ export function Hero() {
         </div>
 
         <div className="mt-10 flex items-center justify-center gap-3">
-          <Button size="lg" className="bg-foreground text-background hover:opacity-90">
-            Start selling with AI <ArrowRight className="h-4 w-4" />
+          <Button asChild size="lg" className="bg-foreground text-background hover:opacity-90">
+            <Link to="/signup">
+              Start selling with AI <ArrowRight className="h-4 w-4" />
+            </Link>
           </Button>
-          <Button size="lg" variant="ghost">See how it works</Button>
+          <Button asChild size="lg" variant="ghost">
+            <a href="#how">See how it works</a>
+          </Button>
         </div>
       </div>
     </section>
