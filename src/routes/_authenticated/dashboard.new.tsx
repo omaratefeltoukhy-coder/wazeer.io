@@ -112,11 +112,17 @@ function NewBusinessWizard() {
           language: "en",
         },
       });
-      toast.success("Your business is ready");
+      toast.success("Your business is ready!");
       navigate({ to: "/dashboard/storefront/$businessId", params: { businessId: res.business_id } });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      toast.error(msg);
+      let msg: string;
+      if (e instanceof Response) {
+        try { msg = (await e.text()) || `${e.status} ${e.statusText}`; } catch { msg = `${e.status} ${e.statusText}`; }
+      } else {
+        msg = e instanceof Error ? e.message : String(e);
+      }
+      console.error("[generateBusiness] failed:", e);
+      toast.error(msg || "Could not generate your business. Please try again.");
       setSubmitting(false);
     }
   };
