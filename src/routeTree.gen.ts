@@ -50,6 +50,7 @@ import { Route as AuthenticatedDashboardIntegrationsMetaRouteImport } from './ro
 import { Route as AuthenticatedDashboardImagesBusinessIdRouteImport } from './routes/_authenticated/dashboard.images.$businessId'
 import { Route as AuthenticatedDashboardEmailsBusinessIdRouteImport } from './routes/_authenticated/dashboard.emails.$businessId'
 import { Route as AuthenticatedDashboardEmailCampaignsRouteImport } from './routes/_authenticated/dashboard.email.campaigns'
+import { Route as AuthenticatedDashboardEmailAutomationsRouteImport } from './routes/_authenticated/dashboard.email.automations'
 import { Route as AuthenticatedDashboardContentVideoRouteImport } from './routes/_authenticated/dashboard.content.video'
 import { Route as AuthenticatedDashboardContentUgcRouteImport } from './routes/_authenticated/dashboard.content.ugc'
 import { Route as AuthenticatedDashboardContentImageRouteImport } from './routes/_authenticated/dashboard.content.image'
@@ -58,6 +59,7 @@ import { Route as AuthenticatedDashboardAutomationsBusinessIdRouteImport } from 
 import { Route as AuthenticatedDashboardAnalyticsBusinessIdRouteImport } from './routes/_authenticated/dashboard.analytics.$businessId'
 import { Route as AuthenticatedDashboardAdsBusinessIdRouteImport } from './routes/_authenticated/dashboard.ads.$businessId'
 import { Route as AuthenticatedDashboardEmailCampaignsIndexRouteImport } from './routes/_authenticated/dashboard.email.campaigns.index'
+import { Route as AuthenticatedDashboardEmailAutomationsIndexRouteImport } from './routes/_authenticated/dashboard.email.automations.index'
 import { Route as AuthenticatedDashboardEmailCampaignsNewRouteImport } from './routes/_authenticated/dashboard.email.campaigns.new'
 import { Route as AuthenticatedDashboardEmailCampaignsIdRouteImport } from './routes/_authenticated/dashboard.email.campaigns.$id'
 
@@ -298,6 +300,12 @@ const AuthenticatedDashboardEmailCampaignsRoute =
     path: '/campaigns',
     getParentRoute: () => AuthenticatedDashboardEmailRoute,
   } as any)
+const AuthenticatedDashboardEmailAutomationsRoute =
+  AuthenticatedDashboardEmailAutomationsRouteImport.update({
+    id: '/automations',
+    path: '/automations',
+    getParentRoute: () => AuthenticatedDashboardEmailRoute,
+  } as any)
 const AuthenticatedDashboardContentVideoRoute =
   AuthenticatedDashboardContentVideoRouteImport.update({
     id: '/video',
@@ -345,6 +353,12 @@ const AuthenticatedDashboardEmailCampaignsIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedDashboardEmailCampaignsRoute,
+  } as any)
+const AuthenticatedDashboardEmailAutomationsIndexRoute =
+  AuthenticatedDashboardEmailAutomationsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedDashboardEmailAutomationsRoute,
   } as any)
 const AuthenticatedDashboardEmailCampaignsNewRoute =
   AuthenticatedDashboardEmailCampaignsNewRouteImport.update({
@@ -394,6 +408,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/content/image': typeof AuthenticatedDashboardContentImageRoute
   '/dashboard/content/ugc': typeof AuthenticatedDashboardContentUgcRoute
   '/dashboard/content/video': typeof AuthenticatedDashboardContentVideoRoute
+  '/dashboard/email/automations': typeof AuthenticatedDashboardEmailAutomationsRouteWithChildren
   '/dashboard/email/campaigns': typeof AuthenticatedDashboardEmailCampaignsRouteWithChildren
   '/dashboard/emails/$businessId': typeof AuthenticatedDashboardEmailsBusinessIdRoute
   '/dashboard/images/$businessId': typeof AuthenticatedDashboardImagesBusinessIdRoute
@@ -409,6 +424,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/products/': typeof AuthenticatedDashboardProductsIndexRoute
   '/dashboard/email/campaigns/$id': typeof AuthenticatedDashboardEmailCampaignsIdRoute
   '/dashboard/email/campaigns/new': typeof AuthenticatedDashboardEmailCampaignsNewRoute
+  '/dashboard/email/automations/': typeof AuthenticatedDashboardEmailAutomationsIndexRoute
   '/dashboard/email/campaigns/': typeof AuthenticatedDashboardEmailCampaignsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -457,6 +473,7 @@ export interface FileRoutesByTo {
   '/dashboard/products': typeof AuthenticatedDashboardProductsIndexRoute
   '/dashboard/email/campaigns/$id': typeof AuthenticatedDashboardEmailCampaignsIdRoute
   '/dashboard/email/campaigns/new': typeof AuthenticatedDashboardEmailCampaignsNewRoute
+  '/dashboard/email/automations': typeof AuthenticatedDashboardEmailAutomationsIndexRoute
   '/dashboard/email/campaigns': typeof AuthenticatedDashboardEmailCampaignsIndexRoute
 }
 export interface FileRoutesById {
@@ -496,6 +513,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/content/image': typeof AuthenticatedDashboardContentImageRoute
   '/_authenticated/dashboard/content/ugc': typeof AuthenticatedDashboardContentUgcRoute
   '/_authenticated/dashboard/content/video': typeof AuthenticatedDashboardContentVideoRoute
+  '/_authenticated/dashboard/email/automations': typeof AuthenticatedDashboardEmailAutomationsRouteWithChildren
   '/_authenticated/dashboard/email/campaigns': typeof AuthenticatedDashboardEmailCampaignsRouteWithChildren
   '/_authenticated/dashboard/emails/$businessId': typeof AuthenticatedDashboardEmailsBusinessIdRoute
   '/_authenticated/dashboard/images/$businessId': typeof AuthenticatedDashboardImagesBusinessIdRoute
@@ -511,6 +529,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/products/': typeof AuthenticatedDashboardProductsIndexRoute
   '/_authenticated/dashboard/email/campaigns/$id': typeof AuthenticatedDashboardEmailCampaignsIdRoute
   '/_authenticated/dashboard/email/campaigns/new': typeof AuthenticatedDashboardEmailCampaignsNewRoute
+  '/_authenticated/dashboard/email/automations/': typeof AuthenticatedDashboardEmailAutomationsIndexRoute
   '/_authenticated/dashboard/email/campaigns/': typeof AuthenticatedDashboardEmailCampaignsIndexRoute
 }
 export interface FileRouteTypes {
@@ -550,6 +569,7 @@ export interface FileRouteTypes {
     | '/dashboard/content/image'
     | '/dashboard/content/ugc'
     | '/dashboard/content/video'
+    | '/dashboard/email/automations'
     | '/dashboard/email/campaigns'
     | '/dashboard/emails/$businessId'
     | '/dashboard/images/$businessId'
@@ -565,6 +585,7 @@ export interface FileRouteTypes {
     | '/dashboard/products/'
     | '/dashboard/email/campaigns/$id'
     | '/dashboard/email/campaigns/new'
+    | '/dashboard/email/automations/'
     | '/dashboard/email/campaigns/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -613,6 +634,7 @@ export interface FileRouteTypes {
     | '/dashboard/products'
     | '/dashboard/email/campaigns/$id'
     | '/dashboard/email/campaigns/new'
+    | '/dashboard/email/automations'
     | '/dashboard/email/campaigns'
   id:
     | '__root__'
@@ -651,6 +673,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/content/image'
     | '/_authenticated/dashboard/content/ugc'
     | '/_authenticated/dashboard/content/video'
+    | '/_authenticated/dashboard/email/automations'
     | '/_authenticated/dashboard/email/campaigns'
     | '/_authenticated/dashboard/emails/$businessId'
     | '/_authenticated/dashboard/images/$businessId'
@@ -666,6 +689,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/products/'
     | '/_authenticated/dashboard/email/campaigns/$id'
     | '/_authenticated/dashboard/email/campaigns/new'
+    | '/_authenticated/dashboard/email/automations/'
     | '/_authenticated/dashboard/email/campaigns/'
   fileRoutesById: FileRoutesById
 }
@@ -969,6 +993,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardEmailCampaignsRouteImport
       parentRoute: typeof AuthenticatedDashboardEmailRoute
     }
+    '/_authenticated/dashboard/email/automations': {
+      id: '/_authenticated/dashboard/email/automations'
+      path: '/automations'
+      fullPath: '/dashboard/email/automations'
+      preLoaderRoute: typeof AuthenticatedDashboardEmailAutomationsRouteImport
+      parentRoute: typeof AuthenticatedDashboardEmailRoute
+    }
     '/_authenticated/dashboard/content/video': {
       id: '/_authenticated/dashboard/content/video'
       path: '/video'
@@ -1024,6 +1055,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/email/campaigns/'
       preLoaderRoute: typeof AuthenticatedDashboardEmailCampaignsIndexRouteImport
       parentRoute: typeof AuthenticatedDashboardEmailCampaignsRoute
+    }
+    '/_authenticated/dashboard/email/automations/': {
+      id: '/_authenticated/dashboard/email/automations/'
+      path: '/'
+      fullPath: '/dashboard/email/automations/'
+      preLoaderRoute: typeof AuthenticatedDashboardEmailAutomationsIndexRouteImport
+      parentRoute: typeof AuthenticatedDashboardEmailAutomationsRoute
     }
     '/_authenticated/dashboard/email/campaigns/new': {
       id: '/_authenticated/dashboard/email/campaigns/new'
@@ -1126,6 +1164,21 @@ const AuthenticatedDashboardContentRouteWithChildren =
     AuthenticatedDashboardContentRouteChildren,
   )
 
+interface AuthenticatedDashboardEmailAutomationsRouteChildren {
+  AuthenticatedDashboardEmailAutomationsIndexRoute: typeof AuthenticatedDashboardEmailAutomationsIndexRoute
+}
+
+const AuthenticatedDashboardEmailAutomationsRouteChildren: AuthenticatedDashboardEmailAutomationsRouteChildren =
+  {
+    AuthenticatedDashboardEmailAutomationsIndexRoute:
+      AuthenticatedDashboardEmailAutomationsIndexRoute,
+  }
+
+const AuthenticatedDashboardEmailAutomationsRouteWithChildren =
+  AuthenticatedDashboardEmailAutomationsRoute._addFileChildren(
+    AuthenticatedDashboardEmailAutomationsRouteChildren,
+  )
+
 interface AuthenticatedDashboardEmailCampaignsRouteChildren {
   AuthenticatedDashboardEmailCampaignsIdRoute: typeof AuthenticatedDashboardEmailCampaignsIdRoute
   AuthenticatedDashboardEmailCampaignsNewRoute: typeof AuthenticatedDashboardEmailCampaignsNewRoute
@@ -1148,11 +1201,14 @@ const AuthenticatedDashboardEmailCampaignsRouteWithChildren =
   )
 
 interface AuthenticatedDashboardEmailRouteChildren {
+  AuthenticatedDashboardEmailAutomationsRoute: typeof AuthenticatedDashboardEmailAutomationsRouteWithChildren
   AuthenticatedDashboardEmailCampaignsRoute: typeof AuthenticatedDashboardEmailCampaignsRouteWithChildren
 }
 
 const AuthenticatedDashboardEmailRouteChildren: AuthenticatedDashboardEmailRouteChildren =
   {
+    AuthenticatedDashboardEmailAutomationsRoute:
+      AuthenticatedDashboardEmailAutomationsRouteWithChildren,
     AuthenticatedDashboardEmailCampaignsRoute:
       AuthenticatedDashboardEmailCampaignsRouteWithChildren,
   }
@@ -1365,3 +1421,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
