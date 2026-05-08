@@ -64,9 +64,14 @@ function CampaignDetailPage() {
 
       <Card className="p-6">
         <h3 className="font-semibold mb-3">Email preview</h3>
-        <div className="border rounded-lg p-6 bg-white text-black">
-          <div dangerouslySetInnerHTML={{ __html: campaign.body_html ?? "" }} />
-        </div>
+        {/* Sandboxed iframe — any <script> in stored body_html is contained. */}
+        <iframe
+          title="Email preview"
+          srcDoc={campaign.body_html ?? ""}
+          sandbox=""
+          referrerPolicy="no-referrer"
+          className="border rounded-lg w-full h-[600px] bg-white"
+        />
       </Card>
     </div>
   );

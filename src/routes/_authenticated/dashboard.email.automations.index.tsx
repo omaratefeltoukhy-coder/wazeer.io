@@ -120,9 +120,15 @@ function AutomationsPage() {
         <Dialog open onOpenChange={() => setPreviewing(null)}>
           <DialogContent className="max-w-2xl">
             <DialogHeader><DialogTitle>{items[previewing].subject}</DialogTitle></DialogHeader>
-            <div className="border rounded-lg p-6 bg-white text-black">
-              <div dangerouslySetInnerHTML={{ __html: items[previewing].body_html ?? "" }} />
-            </div>
+            {/* Sandboxed iframe so any <script> in body_html can't execute,
+                read cookies, or hit the parent origin. */}
+            <iframe
+              title="Automation email preview"
+              srcDoc={items[previewing].body_html ?? ""}
+              sandbox=""
+              referrerPolicy="no-referrer"
+              className="border rounded-lg w-full h-[480px] bg-white"
+            />
           </DialogContent>
         </Dialog>
       )}

@@ -10,16 +10,33 @@ export const Route = createFileRoute("/api/public/billing-webhook")({
       POST: async ({ request }) => {
         const body = await request.text();
         const secret = process.env.BILLING_WEBHOOK_SECRET;
-        if (secret) {
-          const sig = request.headers.get("x-billing-signature") ?? "";
-          const expected = createHmac("sha256", secret).update(body).digest("hex");
-          try {
-            if (!sig || !timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
-              return new Response("Invalid signature", { status: 401 });
-            }
-          } catch {
-            return new Response("Invalid signature", { status: 401 });
+
+        // Fail closed: refuse all traffic if the signing secret isn't configured.
+        // The previous behavior accepted unsigned requests when BILLING_WEBHOOK_SECRET
+        // was unset, which lets anyone forge billing events in production.
+        if (!secret) {
+          console.error("[billing-webhook] BILLING_WEBHOOK_SECRET not set — rejecting request");
+          return new Response("Webhook signing secret not configured", { status: 503 });
+        }
+
+        const sig = request.headers.get("x-billing-signature") ?? "";
+        if (!sig) {
+          return new Response("Missing signature", { status: 401 });
+        }
+        const expected = createHmac("sha256", secret).update(body).digest("hex");
+        let signatureValid = false;
+        try {
+          const sigBuf = Buffer.from(sig, "utf8");
+          const expBuf = Buffer.from(expected, "utf8");
+          // timingSafeEqual requires equal-length buffers. Bail early on length mismatch.
+          if (sigBuf.length === expBuf.length) {
+            signatureValid = timingSafeEqual(sigBuf, expBuf);
           }
+        } catch {
+          signatureValid = false;
+        }
+        if (!signatureValid) {
+          return new Response("Invalid signature", { status: 401 });
         }
         let payload: Record<string, unknown> = {};
         try { payload = JSON.parse(body); } catch { /* tolerate empty body */ }

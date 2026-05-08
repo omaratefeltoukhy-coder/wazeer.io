@@ -174,14 +174,24 @@ function NewCampaignPage() {
           <Tabs defaultValue="desktop">
             <TabsList><TabsTrigger value="desktop">Desktop</TabsTrigger><TabsTrigger value="mobile">Mobile</TabsTrigger></TabsList>
             <TabsContent value="desktop">
-              <div className="border rounded-lg p-6 bg-white text-black">
-                <div dangerouslySetInnerHTML={{ __html: body }} />
-              </div>
+              {/* Sandboxed iframe so user-edited body markup can't execute scripts. */}
+              <iframe
+                title="Email preview (desktop)"
+                srcDoc={body}
+                sandbox=""
+                referrerPolicy="no-referrer"
+                className="border rounded-lg w-full h-[520px] bg-white"
+              />
             </TabsContent>
             <TabsContent value="mobile">
-              <div className="mx-auto border rounded-lg p-4 bg-white text-black" style={{ maxWidth: 380 }}>
-                <div dangerouslySetInnerHTML={{ __html: body }} />
-              </div>
+              <iframe
+                title="Email preview (mobile)"
+                srcDoc={body}
+                sandbox=""
+                referrerPolicy="no-referrer"
+                className="border rounded-lg bg-white mx-auto block h-[640px]"
+                style={{ maxWidth: 380, width: "100%" }}
+              />
             </TabsContent>
           </Tabs>
         </DialogContent>
