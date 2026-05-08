@@ -150,7 +150,7 @@ export const runMockMetaSync = createServerFn({ method: "POST" })
       } else if (c.kind === "capi") {
         patch.metadata_json = { capi_active: true };
       }
-      updates.push(supabaseAdmin.from("meta_connections").update(patch).eq("id", c.id));
+      updates.push(Promise.resolve(supabaseAdmin.from("meta_connections").update(patch as any).eq("id", c.id)));
     }
     await Promise.all(updates);
     return { ok: true, synced: (conns ?? []).length };
