@@ -4,18 +4,35 @@ import { useEntitlements } from "@/hooks/useEntitlements";
 import { PLANS, type PlanId } from "@/lib/billing/plans";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Check, Loader2, Sparkles, Zap, Receipt } from "lucide-react";
+import { Check, Loader2, Sparkles, Zap, Receipt, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { upgradePlan, topUpCredits, listInvoices } from "@/lib/billing/checkout.functions";
+import { listInvoices } from "@/lib/billing/checkout.functions";
+import { createPortalSession } from "@/lib/billing/paddle.functions";
 import { CREDIT_PACKS } from "@/lib/billing/packs";
+import { usePaddleCheckout } from "@/hooks/usePaddleCheckout";
+import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 
 export const Route = createFileRoute("/_authenticated/dashboard/billing")({
   component: BillingPage,
 });
 
 const ORDER: PlanId[] = ["trial", "starter", "growth", "pro", "agency"];
+
+const PLAN_PRICE_ID: Record<Exclude<PlanId, "trial">, string> = {
+  starter: "starter_monthly",
+  growth: "growth_monthly",
+  pro: "pro_monthly",
+  agency: "agency_monthly",
+};
+
+const PACK_PRICE_ID: Record<string, string> = {
+  pack_500: "pack_500",
+  pack_1500: "pack_1500",
+  pack_5000: "pack_5000",
+  pack_15000: "pack_15000",
+};
 
 type InvoiceRow = {
   id: string;
