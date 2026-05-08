@@ -89,12 +89,17 @@ function NewBusinessWizard() {
   const update = (k: keyof Form) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   const generate = async () => {
-    if (!workspaceId) return toast.error("Workspace not ready");
+    let wsId = workspaceId;
+    if (!wsId) wsId = await loadWorkspace();
+    if (!wsId) {
+      toast.error("Your workspace isn't ready yet. Please refresh the page and try again.");
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await generateFn({
         data: {
-          workspace_id: workspaceId,
+          workspace_id: wsId,
           name: form.name,
           type: form.type,
           description: form.description,
