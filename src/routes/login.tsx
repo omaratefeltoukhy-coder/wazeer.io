@@ -11,9 +11,11 @@ import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
-  validateSearch: (s: Record<string, unknown>) => ({
-    redirect: typeof s.redirect === "string" ? s.redirect : "/dashboard",
-  }),
+  validateSearch: (s: Record<string, unknown>) => {
+    const r = typeof s.redirect === "string" ? s.redirect : "/dashboard";
+    const safe = r.startsWith("/") && !r.startsWith("/login") && !r.startsWith("/signup") ? r : "/dashboard";
+    return { redirect: safe };
+  },
 });
 
 function LoginPage() {
