@@ -71,6 +71,12 @@ function AuthenticatedLayout() {
           })}
         </nav>
         <div className="mt-auto border-t pt-4 space-y-2">
+          {ent && (
+            <Link to="/dashboard/billing" className="flex items-center justify-between rounded-lg border bg-card px-3 py-2 text-xs hover:bg-secondary/60">
+              <span className="inline-flex items-center gap-1.5"><Sparkles className="h-3 w-3" /> {ent.plan_meta.name}</span>
+              <span className="text-muted-foreground">{ent.credits_balance} credits</span>
+            </Link>
+          )}
           <div className="px-3 text-xs text-muted-foreground truncate">{user.email}</div>
           <Button variant="ghost" size="sm" className="w-full justify-start" onClick={async () => { await signOut(); navigate({ to: "/" }); }}>
             <LogOut className="h-4 w-4" /> Sign out
