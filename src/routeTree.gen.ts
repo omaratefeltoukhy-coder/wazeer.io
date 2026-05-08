@@ -59,6 +59,7 @@ import { Route as AuthenticatedDashboardContactsBusinessIdRouteImport } from './
 import { Route as AuthenticatedDashboardAutomationsBusinessIdRouteImport } from './routes/_authenticated/dashboard.automations.$businessId'
 import { Route as AuthenticatedDashboardAnalyticsBusinessIdRouteImport } from './routes/_authenticated/dashboard.analytics.$businessId'
 import { Route as AuthenticatedDashboardAdsNewRouteImport } from './routes/_authenticated/dashboard.ads.new'
+import { Route as AuthenticatedDashboardAdsIdRouteImport } from './routes/_authenticated/dashboard.ads.$id'
 import { Route as AuthenticatedDashboardEmailCampaignsIndexRouteImport } from './routes/_authenticated/dashboard.email.campaigns.index'
 import { Route as AuthenticatedDashboardEmailAutomationsIndexRouteImport } from './routes/_authenticated/dashboard.email.automations.index'
 import { Route as AuthenticatedDashboardEmailCampaignsNewRouteImport } from './routes/_authenticated/dashboard.email.campaigns.new'
@@ -355,6 +356,12 @@ const AuthenticatedDashboardAdsNewRoute =
     path: '/new',
     getParentRoute: () => AuthenticatedDashboardAdsRoute,
   } as any)
+const AuthenticatedDashboardAdsIdRoute =
+  AuthenticatedDashboardAdsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedDashboardAdsRoute,
+  } as any)
 const AuthenticatedDashboardEmailCampaignsIndexRoute =
   AuthenticatedDashboardEmailCampaignsIndexRouteImport.update({
     id: '/',
@@ -408,6 +415,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/videos': typeof AuthenticatedDashboardVideosRouteWithChildren
   '/api/public/billing-webhook': typeof ApiPublicBillingWebhookRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
+  '/dashboard/ads/$id': typeof AuthenticatedDashboardAdsIdRoute
   '/dashboard/ads/new': typeof AuthenticatedDashboardAdsNewRoute
   '/dashboard/analytics/$businessId': typeof AuthenticatedDashboardAnalyticsBusinessIdRoute
   '/dashboard/automations/$businessId': typeof AuthenticatedDashboardAutomationsBusinessIdRoute
@@ -459,6 +467,7 @@ export interface FileRoutesByTo {
   '/dashboard/videos': typeof AuthenticatedDashboardVideosRouteWithChildren
   '/api/public/billing-webhook': typeof ApiPublicBillingWebhookRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
+  '/dashboard/ads/$id': typeof AuthenticatedDashboardAdsIdRoute
   '/dashboard/ads/new': typeof AuthenticatedDashboardAdsNewRoute
   '/dashboard/analytics/$businessId': typeof AuthenticatedDashboardAnalyticsBusinessIdRoute
   '/dashboard/automations/$businessId': typeof AuthenticatedDashboardAutomationsBusinessIdRoute
@@ -514,6 +523,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/videos': typeof AuthenticatedDashboardVideosRouteWithChildren
   '/api/public/billing-webhook': typeof ApiPublicBillingWebhookRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
+  '/_authenticated/dashboard/ads/$id': typeof AuthenticatedDashboardAdsIdRoute
   '/_authenticated/dashboard/ads/new': typeof AuthenticatedDashboardAdsNewRoute
   '/_authenticated/dashboard/analytics/$businessId': typeof AuthenticatedDashboardAnalyticsBusinessIdRoute
   '/_authenticated/dashboard/automations/$businessId': typeof AuthenticatedDashboardAutomationsBusinessIdRoute
@@ -571,6 +581,7 @@ export interface FileRouteTypes {
     | '/dashboard/videos'
     | '/api/public/billing-webhook'
     | '/dashboard/'
+    | '/dashboard/ads/$id'
     | '/dashboard/ads/new'
     | '/dashboard/analytics/$businessId'
     | '/dashboard/automations/$businessId'
@@ -622,6 +633,7 @@ export interface FileRouteTypes {
     | '/dashboard/videos'
     | '/api/public/billing-webhook'
     | '/dashboard'
+    | '/dashboard/ads/$id'
     | '/dashboard/ads/new'
     | '/dashboard/analytics/$businessId'
     | '/dashboard/automations/$businessId'
@@ -676,6 +688,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/videos'
     | '/api/public/billing-webhook'
     | '/_authenticated/dashboard/'
+    | '/_authenticated/dashboard/ads/$id'
     | '/_authenticated/dashboard/ads/new'
     | '/_authenticated/dashboard/analytics/$businessId'
     | '/_authenticated/dashboard/automations/$businessId'
@@ -1067,6 +1080,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardAdsNewRouteImport
       parentRoute: typeof AuthenticatedDashboardAdsRoute
     }
+    '/_authenticated/dashboard/ads/$id': {
+      id: '/_authenticated/dashboard/ads/$id'
+      path: '/$id'
+      fullPath: '/dashboard/ads/$id'
+      preLoaderRoute: typeof AuthenticatedDashboardAdsIdRouteImport
+      parentRoute: typeof AuthenticatedDashboardAdsRoute
+    }
     '/_authenticated/dashboard/email/campaigns/': {
       id: '/_authenticated/dashboard/email/campaigns/'
       path: '/'
@@ -1099,12 +1119,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedDashboardAdsRouteChildren {
+  AuthenticatedDashboardAdsIdRoute: typeof AuthenticatedDashboardAdsIdRoute
   AuthenticatedDashboardAdsNewRoute: typeof AuthenticatedDashboardAdsNewRoute
   AuthenticatedDashboardAdsIndexRoute: typeof AuthenticatedDashboardAdsIndexRoute
 }
 
 const AuthenticatedDashboardAdsRouteChildren: AuthenticatedDashboardAdsRouteChildren =
   {
+    AuthenticatedDashboardAdsIdRoute: AuthenticatedDashboardAdsIdRoute,
     AuthenticatedDashboardAdsNewRoute: AuthenticatedDashboardAdsNewRoute,
     AuthenticatedDashboardAdsIndexRoute: AuthenticatedDashboardAdsIndexRoute,
   }
