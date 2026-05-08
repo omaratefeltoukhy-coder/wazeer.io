@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { resolveSupabaseAuthContext } from "@/integrations/supabase/auth-middleware";
 import { PLANS, type PlanId } from "./plans";
 import { getBillingContext } from "./guard.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -15,11 +15,10 @@ const fallbackEntitlements = {
 };
 
 export const getEntitlements = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ workspace_id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     try {
-      const { supabase, userId } = context;
+      const { supabase, userId } = await resolveSupabaseAuthContext();
       // Verify the caller is a member of this workspace
       const { data: m, error: memberError } = await supabase
         .from("workspace_members")
