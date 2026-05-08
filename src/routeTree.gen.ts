@@ -48,6 +48,7 @@ import { Route as AuthenticatedDashboardPostsBusinessIdRouteImport } from './rou
 import { Route as AuthenticatedDashboardIntegrationsMetaRouteImport } from './routes/_authenticated/dashboard.integrations.meta'
 import { Route as AuthenticatedDashboardImagesBusinessIdRouteImport } from './routes/_authenticated/dashboard.images.$businessId'
 import { Route as AuthenticatedDashboardEmailsBusinessIdRouteImport } from './routes/_authenticated/dashboard.emails.$businessId'
+import { Route as AuthenticatedDashboardContentVideoRouteImport } from './routes/_authenticated/dashboard.content.video'
 import { Route as AuthenticatedDashboardContentImageRouteImport } from './routes/_authenticated/dashboard.content.image'
 import { Route as AuthenticatedDashboardContactsBusinessIdRouteImport } from './routes/_authenticated/dashboard.contacts.$businessId'
 import { Route as AuthenticatedDashboardAutomationsBusinessIdRouteImport } from './routes/_authenticated/dashboard.automations.$businessId'
@@ -279,6 +280,12 @@ const AuthenticatedDashboardEmailsBusinessIdRoute =
     path: '/$businessId',
     getParentRoute: () => AuthenticatedDashboardEmailsRoute,
   } as any)
+const AuthenticatedDashboardContentVideoRoute =
+  AuthenticatedDashboardContentVideoRouteImport.update({
+    id: '/video',
+    path: '/video',
+    getParentRoute: () => AuthenticatedDashboardContentRoute,
+  } as any)
 const AuthenticatedDashboardContentImageRoute =
   AuthenticatedDashboardContentImageRouteImport.update({
     id: '/image',
@@ -342,6 +349,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/automations/$businessId': typeof AuthenticatedDashboardAutomationsBusinessIdRoute
   '/dashboard/contacts/$businessId': typeof AuthenticatedDashboardContactsBusinessIdRoute
   '/dashboard/content/image': typeof AuthenticatedDashboardContentImageRoute
+  '/dashboard/content/video': typeof AuthenticatedDashboardContentVideoRoute
   '/dashboard/emails/$businessId': typeof AuthenticatedDashboardEmailsBusinessIdRoute
   '/dashboard/images/$businessId': typeof AuthenticatedDashboardImagesBusinessIdRoute
   '/dashboard/integrations/meta': typeof AuthenticatedDashboardIntegrationsMetaRoute
@@ -384,6 +392,7 @@ export interface FileRoutesByTo {
   '/dashboard/automations/$businessId': typeof AuthenticatedDashboardAutomationsBusinessIdRoute
   '/dashboard/contacts/$businessId': typeof AuthenticatedDashboardContactsBusinessIdRoute
   '/dashboard/content/image': typeof AuthenticatedDashboardContentImageRoute
+  '/dashboard/content/video': typeof AuthenticatedDashboardContentVideoRoute
   '/dashboard/emails/$businessId': typeof AuthenticatedDashboardEmailsBusinessIdRoute
   '/dashboard/images/$businessId': typeof AuthenticatedDashboardImagesBusinessIdRoute
   '/dashboard/integrations/meta': typeof AuthenticatedDashboardIntegrationsMetaRoute
@@ -431,6 +440,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/automations/$businessId': typeof AuthenticatedDashboardAutomationsBusinessIdRoute
   '/_authenticated/dashboard/contacts/$businessId': typeof AuthenticatedDashboardContactsBusinessIdRoute
   '/_authenticated/dashboard/content/image': typeof AuthenticatedDashboardContentImageRoute
+  '/_authenticated/dashboard/content/video': typeof AuthenticatedDashboardContentVideoRoute
   '/_authenticated/dashboard/emails/$businessId': typeof AuthenticatedDashboardEmailsBusinessIdRoute
   '/_authenticated/dashboard/images/$businessId': typeof AuthenticatedDashboardImagesBusinessIdRoute
   '/_authenticated/dashboard/integrations/meta': typeof AuthenticatedDashboardIntegrationsMetaRoute
@@ -478,6 +488,7 @@ export interface FileRouteTypes {
     | '/dashboard/automations/$businessId'
     | '/dashboard/contacts/$businessId'
     | '/dashboard/content/image'
+    | '/dashboard/content/video'
     | '/dashboard/emails/$businessId'
     | '/dashboard/images/$businessId'
     | '/dashboard/integrations/meta'
@@ -520,6 +531,7 @@ export interface FileRouteTypes {
     | '/dashboard/automations/$businessId'
     | '/dashboard/contacts/$businessId'
     | '/dashboard/content/image'
+    | '/dashboard/content/video'
     | '/dashboard/emails/$businessId'
     | '/dashboard/images/$businessId'
     | '/dashboard/integrations/meta'
@@ -566,6 +578,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/automations/$businessId'
     | '/_authenticated/dashboard/contacts/$businessId'
     | '/_authenticated/dashboard/content/image'
+    | '/_authenticated/dashboard/content/video'
     | '/_authenticated/dashboard/emails/$businessId'
     | '/_authenticated/dashboard/images/$businessId'
     | '/_authenticated/dashboard/integrations/meta'
@@ -866,6 +879,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardEmailsBusinessIdRouteImport
       parentRoute: typeof AuthenticatedDashboardEmailsRoute
     }
+    '/_authenticated/dashboard/content/video': {
+      id: '/_authenticated/dashboard/content/video'
+      path: '/video'
+      fullPath: '/dashboard/content/video'
+      preLoaderRoute: typeof AuthenticatedDashboardContentVideoRouteImport
+      parentRoute: typeof AuthenticatedDashboardContentRoute
+    }
     '/_authenticated/dashboard/content/image': {
       id: '/_authenticated/dashboard/content/image'
       path: '/image'
@@ -966,6 +986,7 @@ const AuthenticatedDashboardContactsRouteWithChildren =
 
 interface AuthenticatedDashboardContentRouteChildren {
   AuthenticatedDashboardContentImageRoute: typeof AuthenticatedDashboardContentImageRoute
+  AuthenticatedDashboardContentVideoRoute: typeof AuthenticatedDashboardContentVideoRoute
   AuthenticatedDashboardContentIndexRoute: typeof AuthenticatedDashboardContentIndexRoute
 }
 
@@ -973,6 +994,8 @@ const AuthenticatedDashboardContentRouteChildren: AuthenticatedDashboardContentR
   {
     AuthenticatedDashboardContentImageRoute:
       AuthenticatedDashboardContentImageRoute,
+    AuthenticatedDashboardContentVideoRoute:
+      AuthenticatedDashboardContentVideoRoute,
     AuthenticatedDashboardContentIndexRoute:
       AuthenticatedDashboardContentIndexRoute,
   }
