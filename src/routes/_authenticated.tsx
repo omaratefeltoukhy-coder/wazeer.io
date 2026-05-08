@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   LayoutDashboard, ShoppingBag, Image as ImageIcon, Video, Mail, Megaphone, Target, Link2,
   BarChart3, Settings, LogOut, Plus, Loader2, CreditCard, Sparkles, FileVideo, Workflow, Users, Menu, Package,
-  DollarSign, Receipt, Wallet,
+  DollarSign, Receipt, Wallet, Wand2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -37,6 +37,7 @@ const sections: NavSection[] = [
   {
     heading: "Marketing",
     items: [
+      { to: "/dashboard/content", label: "Content Studio", icon: Wand2 },
       { to: "/dashboard/images", label: "AI Images", icon: ImageIcon },
       { to: "/dashboard/ugc", label: "UGC Scripts", icon: FileVideo },
       { to: "/dashboard/videos", label: "AI Videos", icon: Video },
