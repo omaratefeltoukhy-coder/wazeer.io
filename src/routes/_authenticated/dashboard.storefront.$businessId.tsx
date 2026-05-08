@@ -103,7 +103,11 @@ function StorefrontEditor() {
   const togglePublish = async () => {
     const action = status === "published" ? "unpublish" : "publish";
     if (action === "publish") {
-      const ok = window.confirm(`Publish this storefront live at /s/${slug}? You can unpublish anytime.`);
+      const ok = await confirmDialog({
+        title: "Publish storefront?",
+        description: `It will go live at /s/${slug}. You can unpublish anytime.`,
+        confirmText: "Publish",
+      });
       if (!ok) return;
     }
     setPublishing(true);
