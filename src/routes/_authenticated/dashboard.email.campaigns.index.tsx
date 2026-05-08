@@ -23,7 +23,7 @@ function CampaignsPage() {
 
   const load = async () => {
     setLoading(true); setError(null);
-    try { const r = await list({ data: {} }); setItems(r.items); }
+    try { const r = await list(); setItems(r.items); }
     catch (e: any) { setError(e?.message || "Failed to load"); }
     finally { setLoading(false); }
   };

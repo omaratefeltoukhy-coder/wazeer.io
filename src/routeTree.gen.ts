@@ -56,6 +56,7 @@ import { Route as AuthenticatedDashboardContactsBusinessIdRouteImport } from './
 import { Route as AuthenticatedDashboardAutomationsBusinessIdRouteImport } from './routes/_authenticated/dashboard.automations.$businessId'
 import { Route as AuthenticatedDashboardAnalyticsBusinessIdRouteImport } from './routes/_authenticated/dashboard.analytics.$businessId'
 import { Route as AuthenticatedDashboardAdsBusinessIdRouteImport } from './routes/_authenticated/dashboard.ads.$businessId'
+import { Route as AuthenticatedDashboardEmailCampaignsIndexRouteImport } from './routes/_authenticated/dashboard.email.campaigns.index'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -330,6 +331,12 @@ const AuthenticatedDashboardAdsBusinessIdRoute =
     path: '/$businessId',
     getParentRoute: () => AuthenticatedDashboardAdsRoute,
   } as any)
+const AuthenticatedDashboardEmailCampaignsIndexRoute =
+  AuthenticatedDashboardEmailCampaignsIndexRouteImport.update({
+    id: '/campaigns/',
+    path: '/campaigns/',
+    getParentRoute: () => AuthenticatedDashboardEmailRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -345,7 +352,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/contacts': typeof AuthenticatedDashboardContactsRouteWithChildren
   '/dashboard/content': typeof AuthenticatedDashboardContentRouteWithChildren
   '/dashboard/earnings': typeof AuthenticatedDashboardEarningsRoute
-  '/dashboard/email': typeof AuthenticatedDashboardEmailRoute
+  '/dashboard/email': typeof AuthenticatedDashboardEmailRouteWithChildren
   '/dashboard/emails': typeof AuthenticatedDashboardEmailsRouteWithChildren
   '/dashboard/images': typeof AuthenticatedDashboardImagesRouteWithChildren
   '/dashboard/new': typeof AuthenticatedDashboardNewRoute
@@ -378,6 +385,7 @@ export interface FileRoutesByFullPath {
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/dashboard/content/': typeof AuthenticatedDashboardContentIndexRoute
   '/dashboard/products/': typeof AuthenticatedDashboardProductsIndexRoute
+  '/dashboard/email/campaigns/': typeof AuthenticatedDashboardEmailCampaignsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -391,7 +399,7 @@ export interface FileRoutesByTo {
   '/dashboard/billing': typeof AuthenticatedDashboardBillingRoute
   '/dashboard/contacts': typeof AuthenticatedDashboardContactsRouteWithChildren
   '/dashboard/earnings': typeof AuthenticatedDashboardEarningsRoute
-  '/dashboard/email': typeof AuthenticatedDashboardEmailRoute
+  '/dashboard/email': typeof AuthenticatedDashboardEmailRouteWithChildren
   '/dashboard/emails': typeof AuthenticatedDashboardEmailsRouteWithChildren
   '/dashboard/images': typeof AuthenticatedDashboardImagesRouteWithChildren
   '/dashboard/new': typeof AuthenticatedDashboardNewRoute
@@ -423,6 +431,7 @@ export interface FileRoutesByTo {
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/dashboard/content': typeof AuthenticatedDashboardContentIndexRoute
   '/dashboard/products': typeof AuthenticatedDashboardProductsIndexRoute
+  '/dashboard/email/campaigns': typeof AuthenticatedDashboardEmailCampaignsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -440,7 +449,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/contacts': typeof AuthenticatedDashboardContactsRouteWithChildren
   '/_authenticated/dashboard/content': typeof AuthenticatedDashboardContentRouteWithChildren
   '/_authenticated/dashboard/earnings': typeof AuthenticatedDashboardEarningsRoute
-  '/_authenticated/dashboard/email': typeof AuthenticatedDashboardEmailRoute
+  '/_authenticated/dashboard/email': typeof AuthenticatedDashboardEmailRouteWithChildren
   '/_authenticated/dashboard/emails': typeof AuthenticatedDashboardEmailsRouteWithChildren
   '/_authenticated/dashboard/images': typeof AuthenticatedDashboardImagesRouteWithChildren
   '/_authenticated/dashboard/new': typeof AuthenticatedDashboardNewRoute
@@ -473,6 +482,7 @@ export interface FileRoutesById {
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/_authenticated/dashboard/content/': typeof AuthenticatedDashboardContentIndexRoute
   '/_authenticated/dashboard/products/': typeof AuthenticatedDashboardProductsIndexRoute
+  '/_authenticated/dashboard/email/campaigns/': typeof AuthenticatedDashboardEmailCampaignsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -523,6 +533,7 @@ export interface FileRouteTypes {
     | '/api/public/payments/webhook'
     | '/dashboard/content/'
     | '/dashboard/products/'
+    | '/dashboard/email/campaigns/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -568,6 +579,7 @@ export interface FileRouteTypes {
     | '/api/public/payments/webhook'
     | '/dashboard/content'
     | '/dashboard/products'
+    | '/dashboard/email/campaigns'
   id:
     | '__root__'
     | '/'
@@ -617,6 +629,7 @@ export interface FileRouteTypes {
     | '/api/public/payments/webhook'
     | '/_authenticated/dashboard/content/'
     | '/_authenticated/dashboard/products/'
+    | '/_authenticated/dashboard/email/campaigns/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -961,6 +974,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardAdsBusinessIdRouteImport
       parentRoute: typeof AuthenticatedDashboardAdsRoute
     }
+    '/_authenticated/dashboard/email/campaigns/': {
+      id: '/_authenticated/dashboard/email/campaigns/'
+      path: '/campaigns'
+      fullPath: '/dashboard/email/campaigns/'
+      preLoaderRoute: typeof AuthenticatedDashboardEmailCampaignsIndexRouteImport
+      parentRoute: typeof AuthenticatedDashboardEmailRoute
+    }
   }
 }
 
@@ -1046,6 +1066,21 @@ const AuthenticatedDashboardContentRouteChildren: AuthenticatedDashboardContentR
 const AuthenticatedDashboardContentRouteWithChildren =
   AuthenticatedDashboardContentRoute._addFileChildren(
     AuthenticatedDashboardContentRouteChildren,
+  )
+
+interface AuthenticatedDashboardEmailRouteChildren {
+  AuthenticatedDashboardEmailCampaignsIndexRoute: typeof AuthenticatedDashboardEmailCampaignsIndexRoute
+}
+
+const AuthenticatedDashboardEmailRouteChildren: AuthenticatedDashboardEmailRouteChildren =
+  {
+    AuthenticatedDashboardEmailCampaignsIndexRoute:
+      AuthenticatedDashboardEmailCampaignsIndexRoute,
+  }
+
+const AuthenticatedDashboardEmailRouteWithChildren =
+  AuthenticatedDashboardEmailRoute._addFileChildren(
+    AuthenticatedDashboardEmailRouteChildren,
   )
 
 interface AuthenticatedDashboardEmailsRouteChildren {
@@ -1167,7 +1202,7 @@ interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardContactsRoute: typeof AuthenticatedDashboardContactsRouteWithChildren
   AuthenticatedDashboardContentRoute: typeof AuthenticatedDashboardContentRouteWithChildren
   AuthenticatedDashboardEarningsRoute: typeof AuthenticatedDashboardEarningsRoute
-  AuthenticatedDashboardEmailRoute: typeof AuthenticatedDashboardEmailRoute
+  AuthenticatedDashboardEmailRoute: typeof AuthenticatedDashboardEmailRouteWithChildren
   AuthenticatedDashboardEmailsRoute: typeof AuthenticatedDashboardEmailsRouteWithChildren
   AuthenticatedDashboardImagesRoute: typeof AuthenticatedDashboardImagesRouteWithChildren
   AuthenticatedDashboardNewRoute: typeof AuthenticatedDashboardNewRoute
@@ -1196,7 +1231,8 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
     AuthenticatedDashboardContentRoute:
       AuthenticatedDashboardContentRouteWithChildren,
     AuthenticatedDashboardEarningsRoute: AuthenticatedDashboardEarningsRoute,
-    AuthenticatedDashboardEmailRoute: AuthenticatedDashboardEmailRoute,
+    AuthenticatedDashboardEmailRoute:
+      AuthenticatedDashboardEmailRouteWithChildren,
     AuthenticatedDashboardEmailsRoute:
       AuthenticatedDashboardEmailsRouteWithChildren,
     AuthenticatedDashboardImagesRoute:
