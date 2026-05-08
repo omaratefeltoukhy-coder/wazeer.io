@@ -28,12 +28,8 @@ function PayPage() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("payment_links")
-        .select("*")
-        .eq("unique_code", code)
-        .eq("is_active", true)
-        .maybeSingle();
+      const { data: rows } = await (supabase as any).rpc("get_public_payment_link", { _code: code });
+      const data = Array.isArray(rows) ? rows[0] : rows;
       setLink(data);
       if (data) {
         await supabase.rpc("increment_payment_link_clicks", { _code: code });
@@ -65,7 +61,7 @@ function PayPage() {
         currency: link.currency,
         status: "completed",
       } as any);
-      await supabase.from("payment_links").update({ sales_count: (link.sales_count ?? 0) + 1 }).eq("id", link.id);
+      await (supabase as any).rpc("record_payment_link_sale", { _code: code });
       setDone(true);
       if (link.redirect_url) {
         setTimeout(() => { window.location.href = link.redirect_url; }, 1500);
