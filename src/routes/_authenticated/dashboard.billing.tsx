@@ -147,7 +147,13 @@ function BillingPage() {
           <h1 className="text-3xl font-semibold tracking-tight">Plans & credits</h1>
           <p className="text-muted-foreground mt-1">
             Choose the smallest plan that covers your usage — upgrade anytime.
-        </p>
+          </p>
+        </div>
+        {current !== "trial" && (
+          <Button variant="outline" size="sm" onClick={handlePortal} disabled={busy === "portal"}>
+            {busy === "portal" ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Settings className="h-4 w-4 mr-1.5" /> Manage subscription</>}
+          </Button>
+        )}
       </header>
 
       <section className="rounded-2xl border bg-card p-6">
