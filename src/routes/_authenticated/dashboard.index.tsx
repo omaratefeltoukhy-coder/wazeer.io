@@ -92,6 +92,7 @@ function DashboardHome() {
     } catch (e) {
       console.error("[dashboard] business load failed", e);
       setBizState("error");
+      toast.error(e instanceof Error ? e.message : "Couldn't load your business. Refresh to retry.");
     }
   };
 
@@ -142,6 +143,7 @@ function DashboardHome() {
     } catch (e) {
       console.error("[dashboard] counts load failed", e);
       setCountsState("error");
+      toast.error("Couldn't load your dashboard stats. Refresh to retry.");
     }
   };
 
