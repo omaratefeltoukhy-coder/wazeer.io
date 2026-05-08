@@ -305,13 +305,12 @@ export const sendTestEmail = createServerFn({ method: "POST" })
       event_type: "sent",
       metadata_json: { test: true, to: data.to_email, message_id: msg.id, provider: "resend_demo", subject: msg.subject_line } as any,
     });
-    setTimeout(async () => {
-      await supabaseAdmin.from("email_events").insert({
-        business_id: msg.business_id as string, campaign_id: msg.campaign_id as string,
-        event_type: "delivered",
-        metadata_json: { test: true, to: data.to_email, message_id: msg.id, provider: "resend_demo" } as any,
-      });
-    }, 1000);
+    await new Promise((r) => setTimeout(r, 1000));
+    await supabaseAdmin.from("email_events").insert({
+      business_id: msg.business_id as string, campaign_id: msg.campaign_id as string,
+      event_type: "delivered",
+      metadata_json: { test: true, to: data.to_email, message_id: msg.id, provider: "resend_demo" } as any,
+    });
     return { ok: true, queued: true };
   });
 
