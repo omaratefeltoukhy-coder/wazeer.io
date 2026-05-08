@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 256" role="img" aria-label="Wazeer AI">
+  <title>Wazeer AI</title>
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#10B981"/>
+    </linearGradient>
+    <linearGradient id="aiGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#10B981"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="256" fill="#07111F"/>
+
+  <!-- Mark -->
+  <rect x="20" y="40" width="176" height="176" rx="40" fill="url(#grad)"/>
+  <path
+    d="M52 100 L84 192 L102 144 L120 192 L138 144 L156 192 L188 100"
+    fill="none"
+    stroke="#FFFFFF"
+    stroke-width="14"
+    stroke-linecap="round"
+    stroke-linejoin="round"/>
+  <circle cx="196" cy="56" r="10" fill="#10B981" stroke="#0B1828" stroke-width="3"/>
+
+  <!-- Wordmark -->
+  <g font-family="'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif" font-weight="700" font-size="124" letter-spacing="-3">
+    <text x="232" y="172" fill="#FFFFFF">Wazeer</text>
+    <text x="700" y="172" fill="url(#aiGrad)">AI</text>
+  </g>
+</svg>
