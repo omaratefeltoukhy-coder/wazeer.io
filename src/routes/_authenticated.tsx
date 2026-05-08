@@ -1,10 +1,11 @@
 import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
+import { useEntitlements } from "@/hooks/useEntitlements";
 import { Logo } from "@/components/wazeer/Logo";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, ShoppingBag, Image as ImageIcon, Video, Mail, Megaphone,
-  BarChart3, Lightbulb, Settings, LogOut, Plus, Loader2, CreditCard,
+  BarChart3, Lightbulb, Settings, LogOut, Plus, Loader2, CreditCard, Sparkles,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -28,6 +29,7 @@ function AuthenticatedLayout() {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { data: ent } = useEntitlements();
 
   if (loading) {
     return (
@@ -69,6 +71,12 @@ function AuthenticatedLayout() {
           })}
         </nav>
         <div className="mt-auto border-t pt-4 space-y-2">
+          {ent && (
+            <Link to="/dashboard/billing" className="flex items-center justify-between rounded-lg border bg-card px-3 py-2 text-xs hover:bg-secondary/60">
+              <span className="inline-flex items-center gap-1.5"><Sparkles className="h-3 w-3" /> {ent.plan_meta.name}</span>
+              <span className="text-muted-foreground">{ent.credits_balance} credits</span>
+            </Link>
+          )}
           <div className="px-3 text-xs text-muted-foreground truncate">{user.email}</div>
           <Button variant="ghost" size="sm" className="w-full justify-start" onClick={async () => { await signOut(); navigate({ to: "/" }); }}>
             <LogOut className="h-4 w-4" /> Sign out

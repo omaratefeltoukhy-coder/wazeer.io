@@ -13,9 +13,12 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedDashboardStorefrontRouteImport } from './routes/_authenticated/dashboard.storefront'
 import { Route as AuthenticatedDashboardNewRouteImport } from './routes/_authenticated/dashboard.new'
 import { Route as AuthenticatedDashboardBillingRouteImport } from './routes/_authenticated/dashboard.billing'
+import { Route as AuthenticatedDashboardStorefrontBusinessIdRouteImport } from './routes/_authenticated/dashboard.storefront.$businessId'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -36,11 +39,22 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SSlugRoute = SSlugRouteImport.update({
+  id: '/s/$slug',
+  path: '/s/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedDashboardStorefrontRoute =
+  AuthenticatedDashboardStorefrontRouteImport.update({
+    id: '/storefront',
+    path: '/storefront',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardNewRoute =
   AuthenticatedDashboardNewRouteImport.update({
     id: '/new',
@@ -53,22 +67,34 @@ const AuthenticatedDashboardBillingRoute =
     path: '/billing',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardStorefrontBusinessIdRoute =
+  AuthenticatedDashboardStorefrontBusinessIdRouteImport.update({
+    id: '/$businessId',
+    path: '/$businessId',
+    getParentRoute: () => AuthenticatedDashboardStorefrontRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
+  '/s/$slug': typeof SSlugRoute
   '/dashboard/billing': typeof AuthenticatedDashboardBillingRoute
   '/dashboard/new': typeof AuthenticatedDashboardNewRoute
+  '/dashboard/storefront': typeof AuthenticatedDashboardStorefrontRouteWithChildren
+  '/dashboard/storefront/$businessId': typeof AuthenticatedDashboardStorefrontBusinessIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
+  '/s/$slug': typeof SSlugRoute
   '/dashboard/billing': typeof AuthenticatedDashboardBillingRoute
   '/dashboard/new': typeof AuthenticatedDashboardNewRoute
+  '/dashboard/storefront': typeof AuthenticatedDashboardStorefrontRouteWithChildren
+  '/dashboard/storefront/$businessId': typeof AuthenticatedDashboardStorefrontBusinessIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -77,8 +103,11 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
+  '/s/$slug': typeof SSlugRoute
   '/_authenticated/dashboard/billing': typeof AuthenticatedDashboardBillingRoute
   '/_authenticated/dashboard/new': typeof AuthenticatedDashboardNewRoute
+  '/_authenticated/dashboard/storefront': typeof AuthenticatedDashboardStorefrontRouteWithChildren
+  '/_authenticated/dashboard/storefront/$businessId': typeof AuthenticatedDashboardStorefrontBusinessIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -87,16 +116,22 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/dashboard'
+    | '/s/$slug'
     | '/dashboard/billing'
     | '/dashboard/new'
+    | '/dashboard/storefront'
+    | '/dashboard/storefront/$businessId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/signup'
     | '/dashboard'
+    | '/s/$slug'
     | '/dashboard/billing'
     | '/dashboard/new'
+    | '/dashboard/storefront'
+    | '/dashboard/storefront/$businessId'
   id:
     | '__root__'
     | '/'
@@ -104,8 +139,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/_authenticated/dashboard'
+    | '/s/$slug'
     | '/_authenticated/dashboard/billing'
     | '/_authenticated/dashboard/new'
+    | '/_authenticated/dashboard/storefront'
+    | '/_authenticated/dashboard/storefront/$businessId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -113,6 +151,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  SSlugRoute: typeof SSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -145,12 +184,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/s/$slug': {
+      id: '/s/$slug'
+      path: '/s/$slug'
+      fullPath: '/s/$slug'
+      preLoaderRoute: typeof SSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dashboard/storefront': {
+      id: '/_authenticated/dashboard/storefront'
+      path: '/storefront'
+      fullPath: '/dashboard/storefront'
+      preLoaderRoute: typeof AuthenticatedDashboardStorefrontRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
     }
     '/_authenticated/dashboard/new': {
       id: '/_authenticated/dashboard/new'
@@ -166,18 +219,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardBillingRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/storefront/$businessId': {
+      id: '/_authenticated/dashboard/storefront/$businessId'
+      path: '/$businessId'
+      fullPath: '/dashboard/storefront/$businessId'
+      preLoaderRoute: typeof AuthenticatedDashboardStorefrontBusinessIdRouteImport
+      parentRoute: typeof AuthenticatedDashboardStorefrontRoute
+    }
   }
 }
+
+interface AuthenticatedDashboardStorefrontRouteChildren {
+  AuthenticatedDashboardStorefrontBusinessIdRoute: typeof AuthenticatedDashboardStorefrontBusinessIdRoute
+}
+
+const AuthenticatedDashboardStorefrontRouteChildren: AuthenticatedDashboardStorefrontRouteChildren =
+  {
+    AuthenticatedDashboardStorefrontBusinessIdRoute:
+      AuthenticatedDashboardStorefrontBusinessIdRoute,
+  }
+
+const AuthenticatedDashboardStorefrontRouteWithChildren =
+  AuthenticatedDashboardStorefrontRoute._addFileChildren(
+    AuthenticatedDashboardStorefrontRouteChildren,
+  )
 
 interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardBillingRoute: typeof AuthenticatedDashboardBillingRoute
   AuthenticatedDashboardNewRoute: typeof AuthenticatedDashboardNewRoute
+  AuthenticatedDashboardStorefrontRoute: typeof AuthenticatedDashboardStorefrontRouteWithChildren
 }
 
 const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
   {
     AuthenticatedDashboardBillingRoute: AuthenticatedDashboardBillingRoute,
     AuthenticatedDashboardNewRoute: AuthenticatedDashboardNewRoute,
+    AuthenticatedDashboardStorefrontRoute:
+      AuthenticatedDashboardStorefrontRouteWithChildren,
   }
 
 const AuthenticatedDashboardRouteWithChildren =
@@ -202,6 +280,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  SSlugRoute: SSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
