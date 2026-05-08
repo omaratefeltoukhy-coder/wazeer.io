@@ -76,7 +76,7 @@ export async function refundCredits(workspace_id: string, action: keyof typeof C
     workspace_id,
     amount,
     reason: `refund:${action}`,
-    metadata_json: metadata,
+    metadata_json: metadata as never,
   });
 }
 
