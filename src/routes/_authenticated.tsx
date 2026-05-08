@@ -140,7 +140,8 @@ function AuthenticatedLayout() {
   }
 
   if (!user) {
-    navigate({ to: "/login", search: { redirect: pathname } });
+    const safeRedirect = pathname.startsWith("/login") || pathname.startsWith("/signup") ? "/dashboard" : pathname;
+    navigate({ to: "/login", search: { redirect: safeRedirect }, replace: true });
     return null;
   }
 
