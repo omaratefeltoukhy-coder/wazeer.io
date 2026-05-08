@@ -213,6 +213,32 @@ function NewBusinessWizard() {
 
   const cur = steps[step];
 
+  if (submitting) {
+    return (
+      <div className="p-6 lg:p-10 max-w-xl mx-auto min-h-[80vh] flex flex-col items-center justify-center text-center">
+        <div className="h-16 w-16 rounded-2xl bg-brand-gradient grid place-items-center shadow-glow mb-6 animate-pulse">
+          <Sparkles className="h-7 w-7 text-primary-foreground" />
+        </div>
+        <h2 className="text-2xl font-semibold mb-1">Building {form.name || "your business"}…</h2>
+        <p className="text-sm text-muted-foreground mb-8">Wazeer AI is doing the work. This takes ~20–40 seconds.</p>
+        <ul className="w-full max-w-sm space-y-3 text-left">
+          {generationSteps.map((label, i) => {
+            const done = i < progressIdx;
+            const active = i === progressIdx;
+            return (
+              <li key={label} className="flex items-center gap-3 text-sm">
+                <span className={`h-6 w-6 rounded-full grid place-items-center border ${done ? "bg-brand-gradient border-transparent text-primary-foreground" : active ? "border-foreground" : "border-border text-muted-foreground"}`}>
+                  {done ? <Check className="h-3.5 w-3.5" /> : active ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : i + 1}
+                </span>
+                <span className={done || active ? "text-foreground" : "text-muted-foreground"}>{label}</span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 lg:p-10 max-w-2xl mx-auto">
       <button onClick={() => navigate({ to: "/dashboard" })} className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mb-6">
