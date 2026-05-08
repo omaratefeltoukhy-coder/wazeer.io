@@ -4,18 +4,35 @@ import { useEntitlements } from "@/hooks/useEntitlements";
 import { PLANS, type PlanId } from "@/lib/billing/plans";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Check, Loader2, Sparkles, Zap, Receipt } from "lucide-react";
+import { Check, Loader2, Sparkles, Zap, Receipt, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { upgradePlan, topUpCredits, listInvoices } from "@/lib/billing/checkout.functions";
+import { listInvoices } from "@/lib/billing/checkout.functions";
+import { createPortalSession } from "@/lib/billing/paddle.functions";
 import { CREDIT_PACKS } from "@/lib/billing/packs";
+import { usePaddleCheckout } from "@/hooks/usePaddleCheckout";
+import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 
 export const Route = createFileRoute("/_authenticated/dashboard/billing")({
   component: BillingPage,
 });
 
 const ORDER: PlanId[] = ["trial", "starter", "growth", "pro", "agency"];
+
+const PLAN_PRICE_ID: Record<Exclude<PlanId, "trial">, string> = {
+  starter: "starter_monthly",
+  growth: "growth_monthly",
+  pro: "pro_monthly",
+  agency: "agency_monthly",
+};
+
+const PACK_PRICE_ID: Record<string, string> = {
+  pack_500: "pack_500",
+  pack_1500: "pack_1500",
+  pack_5000: "pack_5000",
+  pack_15000: "pack_15000",
+};
 
 type InvoiceRow = {
   id: string;
@@ -29,16 +46,21 @@ type InvoiceRow = {
 
 function BillingPage() {
   const { data, loading, refresh } = useEntitlements();
-  const upgrade = useServerFn(upgradePlan);
-  const topup = useServerFn(topUpCredits);
   const fetchInvoices = useServerFn(listInvoices);
+  const portal = useServerFn(createPortalSession);
+  const { openCheckout } = usePaddleCheckout();
 
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | undefined>(undefined);
+  const [userId, setUserId] = useState<string | undefined>(undefined);
   const [invoices, setInvoices] = useState<InvoiceRow[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      setUserEmail(u.user?.email ?? undefined);
+      setUserId(u.user?.id ?? undefined);
       const { data: m } = await supabase.from("workspace_members").select("workspace_id").limit(1).single();
       if (m?.workspace_id) {
         setWorkspaceId(m.workspace_id);
@@ -47,6 +69,17 @@ function BillingPage() {
       }
     })().catch(() => setInvoices([]));
   }, [fetchInvoices]);
+
+  // Refresh when checkout returns successful
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("checkout") === "success") {
+      toast.success("Payment received — your account is updating.");
+      const t = setTimeout(() => { void refresh(); if (workspaceId) fetchInvoices({ data: { workspace_id: workspaceId } }).then(r => setInvoices(r.invoices as InvoiceRow[])); }, 2500);
+      window.history.replaceState({}, "", window.location.pathname);
+      return () => clearTimeout(t);
+    }
+  }, [workspaceId, refresh, fetchInvoices]);
 
   if (loading) {
     return (
@@ -67,41 +100,60 @@ function BillingPage() {
   const usedPct = Math.min(100, Math.round((used / monthly) * 100));
 
   const handleUpgrade = async (plan: PlanId) => {
-    if (!workspaceId || plan === "trial") return;
+    if (!workspaceId || plan === "trial" || !userId) return;
     setBusy(`plan:${plan}`);
     try {
-      const r = await upgrade({ data: { workspace_id: workspaceId, plan: plan as "starter" | "growth" | "pro" | "agency" } });
-      toast.success(`Switched to ${PLANS[plan].name} (demo mode)`);
-      await refresh();
-      const inv = await fetchInvoices({ data: { workspace_id: workspaceId } });
-      setInvoices(inv.invoices as InvoiceRow[]);
-      void r;
+      await openCheckout({
+        priceId: PLAN_PRICE_ID[plan as Exclude<PlanId, "trial">],
+        customerEmail: userEmail,
+        customData: { workspaceId, userId },
+      });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Upgrade failed");
+      toast.error(e instanceof Error ? e.message : "Checkout failed");
     } finally { setBusy(null); }
   };
 
   const handleTopUp = async (packId: string) => {
-    if (!workspaceId) return;
+    if (!workspaceId || !userId) return;
     setBusy(`pack:${packId}`);
     try {
-      const r = await topup({ data: { workspace_id: workspaceId, pack_id: packId } });
-      toast.success(`+${r.credits_added.toLocaleString()} credits added (demo mode)`);
-      await refresh();
-      const inv = await fetchInvoices({ data: { workspace_id: workspaceId } });
-      setInvoices(inv.invoices as InvoiceRow[]);
+      await openCheckout({
+        priceId: PACK_PRICE_ID[packId],
+        customerEmail: userEmail,
+        customData: { workspaceId, userId },
+      });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Top-up failed");
     } finally { setBusy(null); }
   };
 
+  const handlePortal = async () => {
+    if (!workspaceId) return;
+    setBusy("portal");
+    try {
+      const r = await portal({ data: { workspace_id: workspaceId } });
+      window.open(r.url, "_blank");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not open portal");
+    } finally { setBusy(null); }
+  };
+
   return (
-    <div className="p-6 lg:p-10 max-w-6xl space-y-10">
-      <header>
-        <h1 className="text-3xl font-semibold tracking-tight">Plans & credits</h1>
-        <p className="text-muted-foreground mt-1">
-          Choose the smallest plan that covers your usage — upgrade anytime. Payments run in demo mode until live billing is enabled.
-        </p>
+    <div className="max-w-6xl">
+      <PaymentTestModeBanner />
+      <div className="p-6 lg:p-10 space-y-10">
+      <header className="flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Plans & credits</h1>
+          <p className="text-muted-foreground mt-1">
+            Choose the smallest plan that covers your usage — upgrade anytime.
+          </p>
+        </div>
+        {current !== "trial" && (
+          <Button variant="outline" size="sm" onClick={handlePortal} disabled={busy === "portal"}>
+            {busy === "portal" ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Settings className="h-4 w-4 mr-1.5" /> Manage subscription</>}
+          </Button>
+        )}
       </header>
 
       <section className="rounded-2xl border bg-card p-6">
@@ -228,6 +280,7 @@ function BillingPage() {
           )}
         </div>
       </section>
+      </div>
     </div>
   );
 }
