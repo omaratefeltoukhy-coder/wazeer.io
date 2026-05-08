@@ -49,6 +49,7 @@ import { Route as AuthenticatedDashboardIntegrationsMetaRouteImport } from './ro
 import { Route as AuthenticatedDashboardImagesBusinessIdRouteImport } from './routes/_authenticated/dashboard.images.$businessId'
 import { Route as AuthenticatedDashboardEmailsBusinessIdRouteImport } from './routes/_authenticated/dashboard.emails.$businessId'
 import { Route as AuthenticatedDashboardContentVideoRouteImport } from './routes/_authenticated/dashboard.content.video'
+import { Route as AuthenticatedDashboardContentUgcRouteImport } from './routes/_authenticated/dashboard.content.ugc'
 import { Route as AuthenticatedDashboardContentImageRouteImport } from './routes/_authenticated/dashboard.content.image'
 import { Route as AuthenticatedDashboardContactsBusinessIdRouteImport } from './routes/_authenticated/dashboard.contacts.$businessId'
 import { Route as AuthenticatedDashboardAutomationsBusinessIdRouteImport } from './routes/_authenticated/dashboard.automations.$businessId'
@@ -286,6 +287,12 @@ const AuthenticatedDashboardContentVideoRoute =
     path: '/video',
     getParentRoute: () => AuthenticatedDashboardContentRoute,
   } as any)
+const AuthenticatedDashboardContentUgcRoute =
+  AuthenticatedDashboardContentUgcRouteImport.update({
+    id: '/ugc',
+    path: '/ugc',
+    getParentRoute: () => AuthenticatedDashboardContentRoute,
+  } as any)
 const AuthenticatedDashboardContentImageRoute =
   AuthenticatedDashboardContentImageRouteImport.update({
     id: '/image',
@@ -349,6 +356,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/automations/$businessId': typeof AuthenticatedDashboardAutomationsBusinessIdRoute
   '/dashboard/contacts/$businessId': typeof AuthenticatedDashboardContactsBusinessIdRoute
   '/dashboard/content/image': typeof AuthenticatedDashboardContentImageRoute
+  '/dashboard/content/ugc': typeof AuthenticatedDashboardContentUgcRoute
   '/dashboard/content/video': typeof AuthenticatedDashboardContentVideoRoute
   '/dashboard/emails/$businessId': typeof AuthenticatedDashboardEmailsBusinessIdRoute
   '/dashboard/images/$businessId': typeof AuthenticatedDashboardImagesBusinessIdRoute
@@ -392,6 +400,7 @@ export interface FileRoutesByTo {
   '/dashboard/automations/$businessId': typeof AuthenticatedDashboardAutomationsBusinessIdRoute
   '/dashboard/contacts/$businessId': typeof AuthenticatedDashboardContactsBusinessIdRoute
   '/dashboard/content/image': typeof AuthenticatedDashboardContentImageRoute
+  '/dashboard/content/ugc': typeof AuthenticatedDashboardContentUgcRoute
   '/dashboard/content/video': typeof AuthenticatedDashboardContentVideoRoute
   '/dashboard/emails/$businessId': typeof AuthenticatedDashboardEmailsBusinessIdRoute
   '/dashboard/images/$businessId': typeof AuthenticatedDashboardImagesBusinessIdRoute
@@ -440,6 +449,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/automations/$businessId': typeof AuthenticatedDashboardAutomationsBusinessIdRoute
   '/_authenticated/dashboard/contacts/$businessId': typeof AuthenticatedDashboardContactsBusinessIdRoute
   '/_authenticated/dashboard/content/image': typeof AuthenticatedDashboardContentImageRoute
+  '/_authenticated/dashboard/content/ugc': typeof AuthenticatedDashboardContentUgcRoute
   '/_authenticated/dashboard/content/video': typeof AuthenticatedDashboardContentVideoRoute
   '/_authenticated/dashboard/emails/$businessId': typeof AuthenticatedDashboardEmailsBusinessIdRoute
   '/_authenticated/dashboard/images/$businessId': typeof AuthenticatedDashboardImagesBusinessIdRoute
@@ -488,6 +498,7 @@ export interface FileRouteTypes {
     | '/dashboard/automations/$businessId'
     | '/dashboard/contacts/$businessId'
     | '/dashboard/content/image'
+    | '/dashboard/content/ugc'
     | '/dashboard/content/video'
     | '/dashboard/emails/$businessId'
     | '/dashboard/images/$businessId'
@@ -531,6 +542,7 @@ export interface FileRouteTypes {
     | '/dashboard/automations/$businessId'
     | '/dashboard/contacts/$businessId'
     | '/dashboard/content/image'
+    | '/dashboard/content/ugc'
     | '/dashboard/content/video'
     | '/dashboard/emails/$businessId'
     | '/dashboard/images/$businessId'
@@ -578,6 +590,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/automations/$businessId'
     | '/_authenticated/dashboard/contacts/$businessId'
     | '/_authenticated/dashboard/content/image'
+    | '/_authenticated/dashboard/content/ugc'
     | '/_authenticated/dashboard/content/video'
     | '/_authenticated/dashboard/emails/$businessId'
     | '/_authenticated/dashboard/images/$businessId'
@@ -886,6 +899,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardContentVideoRouteImport
       parentRoute: typeof AuthenticatedDashboardContentRoute
     }
+    '/_authenticated/dashboard/content/ugc': {
+      id: '/_authenticated/dashboard/content/ugc'
+      path: '/ugc'
+      fullPath: '/dashboard/content/ugc'
+      preLoaderRoute: typeof AuthenticatedDashboardContentUgcRouteImport
+      parentRoute: typeof AuthenticatedDashboardContentRoute
+    }
     '/_authenticated/dashboard/content/image': {
       id: '/_authenticated/dashboard/content/image'
       path: '/image'
@@ -986,6 +1006,7 @@ const AuthenticatedDashboardContactsRouteWithChildren =
 
 interface AuthenticatedDashboardContentRouteChildren {
   AuthenticatedDashboardContentImageRoute: typeof AuthenticatedDashboardContentImageRoute
+  AuthenticatedDashboardContentUgcRoute: typeof AuthenticatedDashboardContentUgcRoute
   AuthenticatedDashboardContentVideoRoute: typeof AuthenticatedDashboardContentVideoRoute
   AuthenticatedDashboardContentIndexRoute: typeof AuthenticatedDashboardContentIndexRoute
 }
@@ -994,6 +1015,8 @@ const AuthenticatedDashboardContentRouteChildren: AuthenticatedDashboardContentR
   {
     AuthenticatedDashboardContentImageRoute:
       AuthenticatedDashboardContentImageRoute,
+    AuthenticatedDashboardContentUgcRoute:
+      AuthenticatedDashboardContentUgcRoute,
     AuthenticatedDashboardContentVideoRoute:
       AuthenticatedDashboardContentVideoRoute,
     AuthenticatedDashboardContentIndexRoute:
