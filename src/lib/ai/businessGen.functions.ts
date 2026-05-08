@@ -57,7 +57,7 @@ export const generateBusiness = createServerFn({ method: "POST" })
       business_id: businessId,
       input_type: "wizard",
       original_text: data.description,
-      extracted_data_json: data as unknown as Record<string, unknown>,
+      extracted_data_json: JSON.parse(JSON.stringify(data)),
     });
 
     // 3) Call Lovable AI for full plan via tool calling
