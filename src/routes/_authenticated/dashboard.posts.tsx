@@ -12,8 +12,11 @@ export const Route = createFileRoute("/_authenticated/dashboard/posts")({
 function PostsHubPage() {
   const [businesses, setBusinesses] = useState<any[] | null>(null);
   useEffect(() => {
+    let mounted = true;
     supabase.from("businesses").select("id, name, type").order("created_at", { ascending: false })
-      .then(({ data }) => setBusinesses(data ?? []));
+      .then(({ data }) => { if (mounted) setBusinesses(data ?? []); })
+      .catch(() => { if (mounted) setBusinesses([]); });
+    return () => { mounted = false; };
   }, []);
 
   return (
