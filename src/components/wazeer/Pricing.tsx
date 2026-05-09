@@ -68,7 +68,7 @@ export function Pricing() {
                 }`}
               >
                 {t.cta === "Talk to sales" ? (
-                  <a href="mailto:sales@wazeer.ai?subject=Agency%20plan%20inquiry">{t.cta}</a>
+                  <a href="mailto:sales@wazeer.io?subject=Agency%20plan%20inquiry">{t.cta}</a>
                 ) : (
                   <Link to="/signup">{t.cta}</Link>
                 )}

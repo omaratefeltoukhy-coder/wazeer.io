@@ -274,7 +274,7 @@ function PublicStorefront() {
       {/* Contact / Support */}
       <section className="px-4 sm:px-6 py-12 border-t max-w-3xl mx-auto text-center">
         <p className="text-sm text-muted-foreground">
-          Questions? Reach us at <a href="mailto:support@wazeer.ai" className="text-foreground hover:underline">support@wazeer.ai</a>
+          Questions? Reach us at <a href="mailto:support@wazeer.io" className="text-foreground hover:underline">support@wazeer.io</a>
         </p>
       </section>
 

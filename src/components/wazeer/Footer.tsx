@@ -40,7 +40,7 @@ export function Footer() {
         <div className="pt-8 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <p>Â© {new Date().getFullYear()} Wazeer. All rights reserved.</p>
           <div className="flex items-center gap-5">
-            <a href="mailto:sales@wazeer.ai?subject=Wazeer%20AI%20inquiry" className="hover:text-foreground">sales@wazeer.ai</a>
+            <a href="mailto:sales@wazeer.io?subject=Wazeer%20inquiry" className="hover:text-foreground">sales@wazeer.io</a>
           </div>
         </div>
       </div>

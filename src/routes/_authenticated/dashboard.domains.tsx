@@ -166,13 +166,13 @@ function DomainsPage() {
                           <div className="grid grid-cols-3 gap-4 flex-1">
                             <div><span className="text-muted-foreground">Type</span><div className="font-medium">CNAME</div></div>
                             <div><span className="text-muted-foreground">Name</span><div className="font-medium">{currentDomain.split(".")[0]}</div></div>
-                            <div><span className="text-muted-foreground">Value</span><div className="font-medium">cname.wazeer.ai</div></div>
+                            <div><span className="text-muted-foreground">Value</span><div className="font-medium">cname.wazeer.io</div></div>
                           </div>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7"
-                            onClick={() => copy(`CNAME  ${currentDomain.split(".")[0]}  cname.wazeer.ai`, b.id)}
+                            onClick={() => copy(`CNAME  ${currentDomain.split(".")[0]}  cname.wazeer.io`, b.id)}
                           >
                             {copied === b.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                           </Button>

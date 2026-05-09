@@ -40,7 +40,7 @@ function RefundsPage() {
               look up your order using the email address you used at checkout, or
             </li>
             <li>
-              Email our team at <a href="mailto:support@wazeer.ai">support@wazeer.ai</a> and we will help you
+              Email our team at <a href="mailto:support@wazeer.io">support@wazeer.io</a> and we will help you
               process the refund.
             </li>
           </ul>
@@ -66,7 +66,7 @@ function RefundsPage() {
 
           <h2>Questions</h2>
           <p>
-            For anything refund-related, email <a href="mailto:support@wazeer.ai">support@wazeer.ai</a>.
+            For anything refund-related, email <a href="mailto:support@wazeer.io">support@wazeer.io</a>.
           </p>
         </article>
       </main>

@@ -50,7 +50,7 @@ function PricingPage() {
             Agencies and high-volume teams can request tailored credits, white-label options, and dedicated support.
           </p>
           <Button asChild variant="outline">
-            <a href="mailto:sales@wazeer.ai?subject=Custom%20plan%20inquiry">Contact sales</a>
+            <a href="mailto:sales@wazeer.io?subject=Custom%20plan%20inquiry">Contact sales</a>
           </Button>
         </div>
       </section>

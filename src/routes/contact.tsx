@@ -60,7 +60,7 @@ function ContactPage() {
                 <h3 className="font-medium">Email us</h3>
               </div>
               <p className="text-sm text-muted-foreground">
-                <a href="mailto:sales@wazeer.ai" className="text-foreground hover:underline">sales@wazeer.ai</a>
+                <a href="mailto:sales@wazeer.io" className="text-foreground hover:underline">sales@wazeer.io</a>
               </p>
             </div>
             <div className="rounded-2xl border bg-card p-5 shadow-soft">

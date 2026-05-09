@@ -28,7 +28,7 @@ function PrivacyPage() {
             This Privacy Notice is issued by <strong>Wazeer</strong> ("Wazeer", "we", "us", or "our"),
             the controller of personal data collected through our website and services. If you have questions
             about this notice or how we handle your data, contact us at{" "}
-            <a href="mailto:privacy@wazeer.ai">privacy@wazeer.ai</a>.
+            <a href="mailto:privacy@wazeer.io">privacy@wazeer.io</a>.
           </p>
 
           <h2>2. Personal data we collect</h2>
@@ -96,7 +96,7 @@ function PrivacyPage() {
             <li>Lodge a complaint with your local supervisory authority.</li>
           </ul>
           <p>
-            To exercise these rights, email <a href="mailto:privacy@wazeer.ai">privacy@wazeer.ai</a>. We aim to
+            To exercise these rights, email <a href="mailto:privacy@wazeer.io">privacy@wazeer.io</a>. We aim to
             respond within one month.
           </p>
 

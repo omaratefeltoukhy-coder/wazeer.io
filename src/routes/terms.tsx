@@ -65,7 +65,7 @@ function TermsPage() {
             may filter, restrict, refuse, or remove outputs that violate these Terms or our policies. As
             between you and Wazeer, you retain rights to your inputs and, subject to these Terms, to
             outputs you generate; we may use de-identified usage data to improve the Service. Rights-holders
-            may submit takedown requests to <a href="mailto:legal@wazeer.ai">legal@wazeer.ai</a>; repeat or
+            may submit takedown requests to <a href="mailto:legal@wazeer.io">legal@wazeer.io</a>; repeat or
             serious infringers will be terminated.
           </p>
 
@@ -145,7 +145,7 @@ function TermsPage() {
 
           <h2>15. Contact</h2>
           <p>
-            Questions about these Terms? Email <a href="mailto:legal@wazeer.ai">legal@wazeer.ai</a>.
+            Questions about these Terms? Email <a href="mailto:legal@wazeer.io">legal@wazeer.io</a>.
           </p>
         </article>
       </main>
