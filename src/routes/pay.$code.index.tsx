@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Lock, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/pay/$code")({
+export const Route = createFileRoute("/pay/$code/")({
   component: PayPage,
 });
 
