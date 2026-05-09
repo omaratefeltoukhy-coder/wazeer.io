@@ -7,12 +7,14 @@ function readEnv() {
     (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_SUPABASE_URL) ||
     (typeof import.meta !== 'undefined' && (import.meta as any).env?.SUPABASE_URL) ||
     (typeof process !== 'undefined' && process.env?.SUPABASE_URL) ||
-    (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_URL);
+    (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_URL) ||
+    "https://nkkljoddgkehbgszgash.supabase.co";
   const SUPABASE_PUBLISHABLE_KEY =
     (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY) ||
     (typeof import.meta !== 'undefined' && (import.meta as any).env?.SUPABASE_PUBLISHABLE_KEY) ||
     (typeof process !== 'undefined' && process.env?.SUPABASE_PUBLISHABLE_KEY) ||
-    (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_PUBLISHABLE_KEY);
+    (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_PUBLISHABLE_KEY) ||
+    "sb_publishable_X3QgB-a38g-hrP8d4nxpxQ_AWEqCfSj";
   return { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY };
 }
 
