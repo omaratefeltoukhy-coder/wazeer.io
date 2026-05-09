@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, Link, useNavigate, useRouterState, useRouter, redirect } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { supabase } from "@/integrations/supabase/client";
@@ -176,6 +176,12 @@ function AuthenticatedLayout() {
   const { data: ent } = useEntitlements();
   const [open, setOpen] = useState(false);
   const showBack = pathname !== "/dashboard" && pathname !== "/";
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate({ to: "/login", search: { redirect: typeof window !== "undefined" ? window.location.href : "/dashboard" } });
+    }
+  }, [loading, user, navigate]);
 
   const handleBack = () => {
     if (typeof window !== "undefined" && window.history.length > 1) {
