@@ -133,11 +133,49 @@ async function handleTransactionCompleted(data: any, env: PaddleEnv) {
   const { id, customerId, items, customData, details } = data;
   const workspaceId = customData?.workspaceId as string | undefined;
   const userId = customData?.userId as string | undefined;
-  if (!workspaceId) return;
-
+  const kind = customData?.kind as string | undefined;
   const item = items?.[0];
   const priceExtId = item?.price?.importMeta?.externalId as string | undefined;
   const amount = Number(details?.totals?.total ?? 0) / 100;
+  const currency = (details?.totals?.currencyCode as string | undefined) ?? "USD";
+
+  // Payment-link sale (non-catalog item, custom amount).
+  if (kind === "payment_link" && workspaceId) {
+    const code = customData?.paymentLinkCode as string | undefined;
+    const productId = customData?.productId as string | null | undefined;
+    const buyerName = customData?.buyerName as string | null | undefined;
+    const buyerPhone = customData?.buyerPhone as string | null | undefined;
+    const buyerEmail = data?.customer?.email as string | undefined;
+
+    if (code) {
+      await supabaseAdmin.rpc("record_payment_link_sale", { _code: code });
+    }
+    // Note: skip `orders` insert — that table requires a business_id, but
+    // payment links are workspace-scoped and may not be tied to a business.
+    // The invoice + payment_links.sales_count counter cover reporting.
+    await supabaseAdmin.from("invoices").insert({
+      workspace_id: workspaceId,
+      user_id: null,
+      amount_usd: amount,
+      currency,
+      status: "paid",
+      kind: "sale",
+      description: `Payment link sale (${code ?? id})`,
+      metadata_json: {
+        paddle_transaction_id: id,
+        paddle_customer_id: customerId,
+        payment_link_code: code,
+        product_id: productId ?? null,
+        buyer_name: buyerName ?? null,
+        buyer_email: buyerEmail ?? null,
+        buyer_phone: buyerPhone ?? null,
+        environment: env,
+      } as never,
+    });
+    return;
+  }
+
+  if (!workspaceId) return;
 
   // One-time credit pack purchase
   if (priceExtId && PACK_TO_CREDITS[priceExtId]) {
