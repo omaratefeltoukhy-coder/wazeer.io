@@ -233,41 +233,56 @@ export const updateUgcScript = createServerFn({ method: "POST" })
     status: z.string().max(40).optional(),
   }).parse(input))
   .handler(async ({ data, context }) => {
-    const patch: any = {};
-    if (data.title !== undefined) patch.title = data.title;
-    if (data.script_json !== undefined) patch.script_json = data.script_json;
-    if (data.status !== undefined) patch.status = data.status;
-    const { error } = await context.supabase.from("ugc_scripts").update(patch).eq("id", data.script_id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
+    try {
+      const patch: any = {};
+      if (data.title !== undefined) patch.title = data.title;
+      if (data.script_json !== undefined) patch.script_json = data.script_json;
+      if (data.status !== undefined) patch.status = data.status;
+      const { error } = await context.supabase.from("ugc_scripts").update(patch).eq("id", data.script_id);
+      if (error) throw new Error(error.message);
+      return { ok: true };
+    } catch (err: any) {
+      console.error("[ugcScript] Error:", err);
+      return { ok: false, error: err.message };
+    }
   });
 
 export const duplicateUgcScript = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ script_id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { data: src, error } = await context.supabase.from("ugc_scripts")
-      .select("business_id, title, platform, performance_score, script_json").eq("id", data.script_id).maybeSingle();
-    if (error || !src) throw new Error("Script not found");
-    const { data: row, error: insErr } = await context.supabase.from("ugc_scripts").insert({
-      business_id: src.business_id,
-      title: `${src.title ?? "Untitled"} (copy)`,
-      platform: src.platform,
-      performance_score: src.performance_score,
-      status: "draft",
-      script_json: src.script_json as any,
-    }).select("id").single();
-    if (insErr) throw new Error(insErr.message);
-    return { id: row!.id };
+    try {
+      const { data: src, error } = await context.supabase.from("ugc_scripts")
+        .select("business_id, title, platform, performance_score, script_json").eq("id", data.script_id).maybeSingle();
+      if (error || !src) throw new Error("Script not found");
+      const { data: row, error: insErr } = await context.supabase.from("ugc_scripts").insert({
+        business_id: src.business_id,
+        title: `${src.title ?? "Untitled"} (copy)`,
+        platform: src.platform,
+        performance_score: src.performance_score,
+        status: "draft",
+        script_json: src.script_json as any,
+      }).select("id").single();
+      if (insErr) throw new Error(insErr.message);
+      return { id: row!.id };
+    } catch (err: any) {
+      console.error("[ugcScript] Error:", err);
+      throw err;
+    }
   });
 
 export const deleteUgcScript = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ script_id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("ugc_scripts").delete().eq("id", data.script_id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
+    try {
+      const { error } = await context.supabase.from("ugc_scripts").delete().eq("id", data.script_id);
+      if (error) throw new Error(error.message);
+      return { ok: true };
+    } catch (err: any) {
+      console.error("[ugcScript] Error:", err);
+      return { ok: false, error: err.message };
+    }
   });
 
 export const listUgcScripts = createServerFn({ method: "POST" })
@@ -280,27 +295,37 @@ export const listUgcScripts = createServerFn({ method: "POST" })
     limit: z.number().int().min(1).max(100).optional().default(50),
   }).parse(input))
   .handler(async ({ data, context }) => {
-    let q = context.supabase.from("ugc_scripts")
-      .select("id, business_id, title, platform, performance_score, status, script_json, created_at, updated_at")
-      .limit(data.limit);
-    if (data.business_id) q = q.eq("business_id", data.business_id);
-    if (data.platform) q = q.eq("platform", data.platform);
-    if (data.search) q = q.ilike("title", `%${data.search}%`);
-    q = data.sort === "score"
-      ? q.order("performance_score", { ascending: false, nullsFirst: false })
-      : q.order("created_at", { ascending: false });
-    const { data: rows, error } = await q;
-    if (error) throw new Error(error.message);
-    return { items: rows ?? [] };
+    try {
+      let q = context.supabase.from("ugc_scripts")
+        .select("id, business_id, title, platform, performance_score, status, script_json, created_at, updated_at")
+        .limit(data.limit);
+      if (data.business_id) q = q.eq("business_id", data.business_id);
+      if (data.platform) q = q.eq("platform", data.platform);
+      if (data.search) q = q.ilike("title", `%${data.search}%`);
+      q = data.sort === "score"
+        ? q.order("performance_score", { ascending: false, nullsFirst: false })
+        : q.order("created_at", { ascending: false });
+      const { data: rows, error } = await q;
+      if (error) throw new Error(error.message);
+      return { items: rows ?? [] };
+    } catch (err: any) {
+      console.error("[ugcScript] Error:", err);
+      throw err;
+    }
   });
 
 export const getUgcScript = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ script_id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { data: row, error } = await context.supabase.from("ugc_scripts")
-      .select("id, business_id, title, platform, performance_score, status, script_json, created_at, updated_at").eq("id", data.script_id).maybeSingle();
-    if (error || !row) throw new Error("Script not found");
-    const { data: biz } = await context.supabase.from("businesses").select("name, workspace_id").eq("id", row.business_id).maybeSingle();
-    return { script: row, business: biz };
+    try {
+      const { data: row, error } = await context.supabase.from("ugc_scripts")
+        .select("id, business_id, title, platform, performance_score, status, script_json, created_at, updated_at").eq("id", data.script_id).maybeSingle();
+      if (error || !row) throw new Error("Script not found");
+      const { data: biz } = await context.supabase.from("businesses").select("name, workspace_id").eq("id", row.business_id).maybeSingle();
+      return { script: row, business: biz };
+    } catch (err: any) {
+      console.error("[ugcScript] Error:", err);
+      throw err;
+    }
   });

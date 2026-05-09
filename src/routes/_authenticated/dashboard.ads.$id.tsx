@@ -25,16 +25,26 @@ function CampaignDetail() {
   const [openAds, setOpenAds] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
     (async () => {
       const { data } = await supabase.from("ad_campaigns").select("*").eq("id", id).maybeSingle();
+      if (!mounted) return;
       setC(data);
       if (data?.product_id) {
         const { data: p } = await supabase.from("products").select("title").eq("id", data.product_id).maybeSingle();
+        if (!mounted) return;
         setProductName(p?.title ?? "");
       }
       const { data: a } = await supabase.from("ad_analytics").select("*").eq("campaign_id", id).order("date");
+      if (!mounted) return;
       setAnalytics(a ?? []);
-    })();
+    })().catch(() => {
+      if (!mounted) return;
+      setC(null);
+      setProductName("");
+      setAnalytics([]);
+    });
+    return () => { mounted = false; };
   }, [id]);
 
   const filtered = useMemo(() => {

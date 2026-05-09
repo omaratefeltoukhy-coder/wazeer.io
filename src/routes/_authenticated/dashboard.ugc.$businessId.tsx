@@ -75,9 +75,19 @@ function UgcScriptEditor() {
   };
 
   useEffect(() => {
-    supabase.from("businesses").select("name").eq("id", businessId).maybeSingle()
-      .then(({ data }) => setBizName(data?.name ?? ""));
+    let mounted = true;
+    (async () => {
+      try {
+        const { data } = await supabase.from("businesses").select("name").eq("id", businessId).maybeSingle();
+        if (!mounted) return;
+        setBizName(data?.name ?? "");
+      } catch {
+        if (!mounted) return;
+        setBizName("");
+      }
+    })();
     refreshList();
+    return () => { mounted = false; };
   }, [businessId]);
 
   useEffect(() => {

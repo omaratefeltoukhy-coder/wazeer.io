@@ -41,13 +41,21 @@ function IntegrationsMetaPage() {
   const [businesses, setBusinesses] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
+    let mounted = true;
     (async () => {
       const { data } = await supabase.from("businesses").select("id, name").order("created_at", { ascending: false });
+      if (!mounted) return;
       setBusinesses(data ?? []);
       const url = new URL(window.location.href);
       const bid = url.searchParams.get("business_id");
+      if (!mounted) return;
       setBusinessId(bid ?? data?.[0]?.id ?? null);
-    })();
+    })().catch(() => {
+      if (!mounted) return;
+      setBusinesses([]);
+      setBusinessId(null);
+    });
+    return () => { mounted = false; };
   }, []);
 
   const list = useServerFn(listMetaConnections);

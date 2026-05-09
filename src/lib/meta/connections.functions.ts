@@ -122,26 +122,36 @@ export const listMetaConnections = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ business_id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    const { data: rows, error } = await context.supabase
-      .from("meta_connections")
-      .select("id, kind, label, token_status, permissions_json, page_id, instagram_account_id, ad_account_id, last_synced_at, error_message, metadata_json, created_at, updated_at")
-      .eq("business_id", data.business_id)
-      .order("created_at", { ascending: true });
-    if (error) throw new Error(error.message);
-    return { connections: rows ?? [] };
+    try {
+      const { data: rows, error } = await context.supabase
+        .from("meta_connections")
+        .select("id, kind, label, token_status, permissions_json, page_id, instagram_account_id, ad_account_id, last_synced_at, error_message, metadata_json, created_at, updated_at")
+        .eq("business_id", data.business_id)
+        .order("created_at", { ascending: true });
+      if (error) throw new Error(error.message);
+      return { connections: rows ?? [] };
+    } catch (err: any) {
+      console.error("[connections] Error:", err);
+      throw err;
+    }
   });
 
 export const startMetaOAuth = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ business_id: z.string().uuid(), kind: KIND }).parse(i))
   .handler(async ({ data, context }) => {
-    await loadWorkspaceId(context.supabase, data.business_id);
-    const state = `${data.business_id}:${data.kind}:${Date.now()}`;
-    const isDemo = (process.env.META_MODE ?? "demo") === "demo";
-    const redirect_url = isDemo
-      ? `/dashboard/integrations/meta?demo_callback=1&state=${encodeURIComponent(state)}&kind=${data.kind}&business_id=${data.business_id}`
-      : `https://www.facebook.com/${GRAPH_API_VERSION}/dialog/oauth?client_id=${process.env.META_APP_ID}&redirect_uri=${encodeURIComponent(process.env.META_REDIRECT_URI ?? "")}&state=${encodeURIComponent(state)}&scope=${encodeURIComponent(PERMISSIONS[data.kind].join(","))}`;
-    return { redirect_url, demo: isDemo };
+    try {
+      await loadWorkspaceId(context.supabase, data.business_id);
+      const state = `${data.business_id}:${data.kind}:${Date.now()}`;
+      const isDemo = (process.env.META_MODE ?? "demo") === "demo";
+      const redirect_url = isDemo
+        ? `/dashboard/integrations/meta?demo_callback=1&state=${encodeURIComponent(state)}&kind=${data.kind}&business_id=${data.business_id}`
+        : `https://www.facebook.com/${GRAPH_API_VERSION}/dialog/oauth?client_id=${process.env.META_APP_ID}&redirect_uri=${encodeURIComponent(process.env.META_REDIRECT_URI ?? "")}&state=${encodeURIComponent(state)}&scope=${encodeURIComponent(PERMISSIONS[data.kind].join(","))}`;
+      return { redirect_url, demo: isDemo };
+    } catch (err: any) {
+      console.error("[connections] Error:", err);
+      throw err;
+    }
   });
 
 export const handleMetaOAuthCallback = createServerFn({ method: "POST" })
@@ -151,68 +161,78 @@ export const handleMetaOAuthCallback = createServerFn({ method: "POST" })
     code: z.string().optional(), // present in prod
   }).parse(i))
   .handler(async ({ data, context }) => {
-    const ws_id = await loadWorkspaceId(context.supabase, data.business_id);
-    const isDemo = (process.env.META_MODE ?? "demo") === "demo";
+    try {
+      const ws_id = await loadWorkspaceId(context.supabase, data.business_id);
+      const isDemo = (process.env.META_MODE ?? "demo") === "demo";
 
-    let accessToken: string;
-    if (isDemo) {
-      accessToken = `demo-token-${data.kind}-${Math.random().toString(36).slice(2, 10)}`;
-    } else {
-      if (!data.code) throw new Error("Authorization code missing from Meta callback");
-      const exchanged = await exchangeCodeForToken(data.code);
-      accessToken = await exchangeForLongLivedToken(exchanged.access_token);
+      let accessToken: string;
+      if (isDemo) {
+        accessToken = `demo-token-${data.kind}-${Math.random().toString(36).slice(2, 10)}`;
+      } else {
+        if (!data.code) throw new Error("Authorization code missing from Meta callback");
+        const exchanged = await exchangeCodeForToken(data.code);
+        accessToken = await exchangeForLongLivedToken(exchanged.access_token);
+      }
+
+      const encryptedToken = await encryptToken(accessToken);
+
+      const label = ({ facebook_page: "Facebook Page", instagram: "Instagram Business", ad_account: "Meta Ad Account", pixel: "Meta Pixel", capi: "Conversions API" } as const)[data.kind];
+
+      const row = {
+        business_id: data.business_id,
+        user_id: context.userId,
+        provider: "facebook" as const,
+        kind: data.kind,
+        label,
+        token_status: isDemo ? "demo" : "connected",
+        permissions_json: PERMISSIONS[data.kind] as never,
+        encrypted_token: encryptedToken as unknown as never,
+        last_synced_at: new Date().toISOString(),
+        metadata_json: { mode: isDemo ? "demo" : "live" } as never,
+        error_message: null,
+      };
+
+      // Upsert by (business_id, kind)
+      const { data: existing } = await supabaseAdmin
+        .from("meta_connections").select("id").eq("business_id", data.business_id).eq("kind", data.kind).maybeSingle();
+      let conn_id: string;
+      if (existing) {
+        const { error } = await supabaseAdmin.from("meta_connections").update(row).eq("id", (existing as any).id);
+        if (error) throw new Error(error.message);
+        conn_id = (existing as any).id;
+      } else {
+        const { data: ins, error } = await supabaseAdmin.from("meta_connections").insert(row).select("id").single();
+        if (error) throw new Error(error.message);
+        conn_id = (ins as any).id;
+      }
+
+      await supabaseAdmin.from("audit_logs").insert({
+        workspace_id: ws_id, business_id: data.business_id, user_id: context.userId,
+        action: "connect_meta", entity: "meta_connection", entity_id: conn_id, metadata_json: { kind: data.kind, mode: isDemo ? "demo" : "live" } as never,
+      });
+
+      return { ok: true, connection_id: conn_id };
+    } catch (err: any) {
+      console.error("[connections] Error:", err);
+      return { ok: false, error: err.message };
     }
-
-    const encryptedToken = await encryptToken(accessToken);
-
-    const label = ({ facebook_page: "Facebook Page", instagram: "Instagram Business", ad_account: "Meta Ad Account", pixel: "Meta Pixel", capi: "Conversions API" } as const)[data.kind];
-
-    const row = {
-      business_id: data.business_id,
-      user_id: context.userId,
-      provider: "facebook" as const,
-      kind: data.kind,
-      label,
-      token_status: isDemo ? "demo" : "connected",
-      permissions_json: PERMISSIONS[data.kind] as never,
-      encrypted_token: encryptedToken as unknown as never,
-      last_synced_at: new Date().toISOString(),
-      metadata_json: { mode: isDemo ? "demo" : "live" } as never,
-      error_message: null,
-    };
-
-    // Upsert by (business_id, kind)
-    const { data: existing } = await supabaseAdmin
-      .from("meta_connections").select("id").eq("business_id", data.business_id).eq("kind", data.kind).maybeSingle();
-    let conn_id: string;
-    if (existing) {
-      const { error } = await supabaseAdmin.from("meta_connections").update(row).eq("id", (existing as any).id);
-      if (error) throw new Error(error.message);
-      conn_id = (existing as any).id;
-    } else {
-      const { data: ins, error } = await supabaseAdmin.from("meta_connections").insert(row).select("id").single();
-      if (error) throw new Error(error.message);
-      conn_id = (ins as any).id;
-    }
-
-    await supabaseAdmin.from("audit_logs").insert({
-      workspace_id: ws_id, business_id: data.business_id, user_id: context.userId,
-      action: "connect_meta", entity: "meta_connection", entity_id: conn_id, metadata_json: { kind: data.kind, mode: isDemo ? "demo" : "live" } as never,
-    });
-
-    return { ok: true, connection_id: conn_id };
   });
 
 export const disconnectMeta = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ connection_id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    const { data: c } = await context.supabase.from("meta_connections").select("id, business_id, kind").eq("id", data.connection_id).maybeSingle();
-    if (!c) throw new Error("Connection not found");
-    const { error } = await context.supabase.from("meta_connections").delete().eq("id", data.connection_id);
-    if (error) throw new Error(error.message);
-    await audit((c as any).business_id, context.userId, "disconnect_meta", data.connection_id, { kind: (c as any).kind });
-    return { ok: true };
+    try {
+      const { data: c } = await context.supabase.from("meta_connections").select("id, business_id, kind").eq("id", data.connection_id).maybeSingle();
+      if (!c) throw new Error("Connection not found");
+      const { error } = await context.supabase.from("meta_connections").delete().eq("id", data.connection_id);
+      if (error) throw new Error(error.message);
+      await audit((c as any).business_id, context.userId, "disconnect_meta", data.connection_id, { kind: (c as any).kind });
+      return { ok: true };
+    } catch (err: any) {
+      console.error("[connections] Error:", err);
+      return { ok: false, error: err.message };
+    }
   });
 
 async function getDecryptedToken(encryptedToken: string | null | undefined): Promise<string | null> {

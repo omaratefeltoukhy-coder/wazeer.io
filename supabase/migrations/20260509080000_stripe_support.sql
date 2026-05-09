@@ -7,7 +7,8 @@
 
 ALTER TABLE public.transactions
   ADD COLUMN IF NOT EXISTS provider text DEFAULT 'paddle',
-  ADD COLUMN IF NOT EXISTS provider_transaction_id text;
+  ADD COLUMN IF NOT EXISTS provider_transaction_id text,
+  ADD COLUMN IF NOT EXISTS buyer_phone text;
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_provider_txn
   ON public.transactions (provider, provider_transaction_id)
@@ -61,7 +62,7 @@ BEGIN
     INTO v_link
     FROM public.payment_links
    WHERE unique_code = _code
-     AND active = true;
+     AND is_active = true;
 
   IF v_link IS NULL THEN
     RAISE EXCEPTION 'Payment link not found or inactive: %', _code;

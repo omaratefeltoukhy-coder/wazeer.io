@@ -62,25 +62,27 @@ export const cofounderChat = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const userId = context.userId;
     const supabase = supabaseAdmin;
+    let workspace_id = "";
 
-    // Look up workspace from user
-    const { data: m } = await supabase
-      .from("workspace_members")
-      .select("workspace_id")
-      .eq("user_id", userId)
-      .limit(1)
-      .maybeSingle();
+    try {
+      // Look up workspace from user
+      const { data: m } = await supabase
+        .from("workspace_members")
+        .select("workspace_id")
+        .eq("user_id", userId)
+        .limit(1)
+        .maybeSingle();
 
-    if (!m) throw new Error("No workspace found");
-    const workspace_id = m.workspace_id;
+      if (!m) throw new Error("No workspace found");
+      workspace_id = m.workspace_id;
 
-    // Require 1 credit per message
-    await requireEntitlement(workspace_id, "ai_chat");
-    await consumeCredits(workspace_id, "ai_chat", { user_id: userId });
+      // Require 1 credit per message
+      await requireEntitlement(workspace_id, "ai_chat");
+      await consumeCredits(workspace_id, "ai_chat", { user_id: userId });
 
-    const ctx = await loadBusinessContext(supabase, workspace_id, data.business_id);
+      const ctx = await loadBusinessContext(supabase, workspace_id, data.business_id);
 
-    const systemPrompt = `You are Wazeer, an AI Cofounder and business growth strategist. You help solopreneurs and creators launch, grow, and monetize their businesses.
+      const systemPrompt = `You are Wazeer, an AI Cofounder and business growth strategist. You help solopreneurs and creators launch, grow, and monetize their businesses.
 
 Your personality:
 - Encouraging but direct — you celebrate wins and call out what's not working
@@ -106,12 +108,24 @@ Your job:
 
 Never be generic. Always tie advice to their specific business context.`;
 
-    const messages = [
-      { role: "system", content: systemPrompt },
-      ...data.history.slice(-6),
-      { role: "user", content: data.message },
-    ];
+      const messages = [
+        { role: "system", content: systemPrompt },
+        ...data.history.slice(-6),
+        { role: "user", content: data.message },
+      ];
 
-    const result = await callCofounderAI(messages);
-    return { reply: result.content, mock: result.mock };
+      const result = await callCofounderAI(messages);
+      return { reply: result.content, mock: result.mock };
+    } catch (err) {
+      // Refund credits if anything fails after deduction
+      if (workspace_id) {
+        try {
+          const { refundCredits } = await import("@/lib/billing/guard.server");
+          await refundCredits(workspace_id, "ai_chat", { user_id: userId, reason: "handler_error" });
+        } catch (refundErr) {
+          console.error("[cofounderChat] Refund failed:", refundErr);
+        }
+      }
+      throw err;
+    }
   });

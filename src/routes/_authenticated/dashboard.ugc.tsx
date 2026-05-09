@@ -35,8 +35,18 @@ function UgcScriptsList() {
   const [sort, setSort] = useState<"recent" | "score">("recent");
 
   useEffect(() => {
-    supabase.from("businesses").select("id, name").order("created_at", { ascending: false })
-      .then(({ data }) => setBusinesses(data ?? []));
+    let mounted = true;
+    (async () => {
+      try {
+        const { data } = await supabase.from("businesses").select("id, name").order("created_at", { ascending: false });
+        if (!mounted) return;
+        setBusinesses(data ?? []);
+      } catch {
+        if (!mounted) return;
+        setBusinesses([]);
+      }
+    })();
+    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {

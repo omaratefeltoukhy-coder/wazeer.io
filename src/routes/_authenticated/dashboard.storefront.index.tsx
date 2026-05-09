@@ -14,17 +14,25 @@ function StorefrontIndex() {
   const [items, setItems] = useState<{ id: string; name: string; type: string }[] | null>(null);
 
   useEffect(() => {
-    supabase
-      .from("businesses")
-      .select("id, name, type, created_at")
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
+    let mounted = true;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("businesses")
+          .select("id, name, type, created_at")
+          .order("created_at", { ascending: false });
+        if (!mounted) return;
         const list = (data ?? []) as { id: string; name: string; type: string }[];
         setItems(list);
         if (list.length === 1) {
           navigate({ to: "/dashboard/storefront/$businessId", params: { businessId: list[0].id }, replace: true });
         }
-      });
+      } catch {
+        if (!mounted) return;
+        setItems([]);
+      }
+    })();
+    return () => { mounted = false; };
   }, [navigate]);
 
   if (items === null) {

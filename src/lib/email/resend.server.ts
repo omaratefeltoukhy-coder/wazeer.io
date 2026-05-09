@@ -312,7 +312,19 @@ function inlineMd(text: string): string {
   return escapeHtml(text)
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.*?)\*/g, "<em>$1</em>")
-    .replace(/\[([^\]]+?)\]\(([^)]+?)\)/g, '<a href="$2">$1</a>');
+    .replace(/\[([^\]]+?)\]\(([^)]+?)\)/g, (_, label, url) => {
+      const safeUrl = sanitizeUrl(url);
+      return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+    });
+}
+
+function sanitizeUrl(url: string): string {
+  // Block javascript:, data:, vbscript: protocols
+  const normalized = url.trim().toLowerCase();
+  if (normalized.startsWith("javascript:") || normalized.startsWith("data:") || normalized.startsWith("vbscript:")) {
+    return "#";
+  }
+  return url;
 }
 
 function escapeHtml(text: string): string {
@@ -325,11 +337,13 @@ function escapeHtml(text: string): string {
 }
 
 export function personalizeEmail(template: string, contact: { name?: string | null; email?: string | null }): string {
-  const firstName = contact.name?.split(" ")[0] ?? "there";
+  const firstName = escapeHtml(contact.name?.split(" ")[0] ?? "there");
+  const name = escapeHtml(contact.name ?? "there");
+  const email = escapeHtml(contact.email ?? "");
   return template
     .replace(/\{\{\s*first_name\s*\}\}/gi, firstName)
-    .replace(/\{\{\s*name\s*\}\}/gi, contact.name ?? "there")
-    .replace(/\{\{\s*email\s*\}\}/gi, contact.email ?? "");
+    .replace(/\{\{\s*name\s*\}\}/gi, name)
+    .replace(/\{\{\s*email\s*\}\}/gi, email);
 }
 
 export function buildUnsubscribeUrl(token: string): string {

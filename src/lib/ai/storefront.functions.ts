@@ -78,18 +78,23 @@ export const getStorefrontByBusiness = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ business_id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const sf = await loadStorefront(context.supabase, data.business_id);
-    const { data: biz } = await context.supabase
-      .from("businesses")
-      .select("id, name, type, currency, workspace_id")
-      .eq("id", data.business_id)
-      .maybeSingle();
-    const { data: offer } = await context.supabase
-      .from("offers")
-      .select("id, name, description, price, currency, billing_interval, status")
-      .eq("business_id", data.business_id)
-      .maybeSingle();
-    return { storefront: sf, business: biz, offer };
+    try {
+      const sf = await loadStorefront(context.supabase, data.business_id);
+      const { data: biz } = await context.supabase
+        .from("businesses")
+        .select("id, name, type, currency, workspace_id")
+        .eq("id", data.business_id)
+        .maybeSingle();
+      const { data: offer } = await context.supabase
+        .from("offers")
+        .select("id, name, description, price, currency, billing_interval, status")
+        .eq("business_id", data.business_id)
+        .maybeSingle();
+      return { storefront: sf, business: biz, offer };
+    } catch (err: any) {
+      console.error("[storefront] Error:", err);
+      throw err;
+    }
   });
 
 export const updateStorefront = createServerFn({ method: "POST" })
@@ -102,13 +107,18 @@ export const updateStorefront = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    const sf = await loadStorefront(context.supabase, data.business_id);
-    const patch: { title?: string; content_json?: any } = {};
-    if (data.title !== undefined) patch.title = data.title;
-    if (data.content_json !== undefined) patch.content_json = data.content_json as any;
-    const { error } = await context.supabase.from("storefronts").update(patch).eq("id", sf.id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
+    try {
+      const sf = await loadStorefront(context.supabase, data.business_id);
+      const patch: { title?: string; content_json?: any } = {};
+      if (data.title !== undefined) patch.title = data.title;
+      if (data.content_json !== undefined) patch.content_json = data.content_json as any;
+      const { error } = await context.supabase.from("storefronts").update(patch).eq("id", sf.id);
+      if (error) throw new Error(error.message);
+      return { ok: true };
+    } catch (err: any) {
+      console.error("[storefront] Error:", err);
+      return { ok: false, error: err.message };
+    }
   });
 
 export const regenerateStorefrontSection = createServerFn({ method: "POST" })
@@ -221,31 +231,36 @@ export const setStorefrontPublishStatus = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    const workspace_id = await loadWorkspaceId(context.supabase, data.business_id);
-    await requireEntitlement(workspace_id, "storefront");
-    const sf = await loadStorefront(context.supabase, data.business_id);
-    const status = data.action === "publish" ? "published" : "draft";
-    const { error } = await context.supabase
-      .from("storefronts")
-      .update({ status, published_url: data.action === "publish" ? `/s/${sf.slug}` : null })
-      .eq("id", sf.id);
-    if (error) throw new Error(error.message);
+    try {
+      const workspace_id = await loadWorkspaceId(context.supabase, data.business_id);
+      await requireEntitlement(workspace_id, "storefront");
+      const sf = await loadStorefront(context.supabase, data.business_id);
+      const status = data.action === "publish" ? "published" : "draft";
+      const { error } = await context.supabase
+        .from("storefronts")
+        .update({ status, published_url: data.action === "publish" ? `/s/${sf.slug}` : null })
+        .eq("id", sf.id);
+      if (error) throw new Error(error.message);
 
-    // If publishing, also mark the offer as active so checkout works.
-    if (data.action === "publish") {
-      await context.supabase.from("offers").update({ status: "active" }).eq("business_id", data.business_id);
+      // If publishing, also mark the offer as active so checkout works.
+      if (data.action === "publish") {
+        await context.supabase.from("offers").update({ status: "active" }).eq("business_id", data.business_id);
+      }
+
+      // Audit log entry
+      await supabaseAdmin.from("audit_logs").insert({
+        workspace_id,
+        business_id: data.business_id,
+        user_id: context.userId,
+        action: data.action,
+        entity: "storefront",
+        entity_id: sf.id,
+        metadata_json: { slug: sf.slug } as never,
+      });
+
+      return { ok: true, status, slug: sf.slug };
+    } catch (err: any) {
+      console.error("[storefront] Error:", err);
+      return { ok: false, error: err.message };
     }
-
-    // Audit log entry
-    await supabaseAdmin.from("audit_logs").insert({
-      workspace_id,
-      business_id: data.business_id,
-      user_id: context.userId,
-      action: data.action,
-      entity: "storefront",
-      entity_id: sf.id,
-      metadata_json: { slug: sf.slug } as never,
-    });
-
-    return { ok: true, status, slug: sf.slug };
   });

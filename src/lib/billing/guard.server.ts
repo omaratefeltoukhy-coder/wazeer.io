@@ -64,6 +64,23 @@ export async function consumeCredits(workspace_id: string, action: keyof typeof 
 export async function refundCredits(workspace_id: string, action: keyof typeof CREDIT_COST, metadata: Record<string, unknown> = {}): Promise<void> {
   const amount = CREDIT_COST[action] ?? 0;
   if (amount <= 0) return;
+
+  // Verify that credits were actually deducted for this operation
+  const { data: priorDeduction } = await supabaseAdmin
+    .from("credit_transactions")
+    .select("id")
+    .eq("workspace_id", workspace_id)
+    .eq("reason", action)
+    .eq("amount", -amount)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!priorDeduction) {
+    console.warn(`[refundCredits] No prior deduction found for ${action} in workspace ${workspace_id}. Skipping refund.`);
+    return;
+  }
+
   // Add a fresh adjustment grant so the balance is restored.
   await supabaseAdmin.from("credit_grants").insert({
     workspace_id,

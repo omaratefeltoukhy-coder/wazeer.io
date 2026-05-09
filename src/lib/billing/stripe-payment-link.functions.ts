@@ -15,43 +15,48 @@ export const createStripePaymentLinkCheckout = createServerFn({ method: "POST" }
       .parse(i)
   )
   .handler(async ({ data }) => {
-    const supabase = supabaseAdmin;
+    try {
+      const supabase = supabaseAdmin;
 
-    const { data: link, error } = await supabase
-      .from("payment_links")
-      .select("*")
-      .eq("unique_code", data.code)
-      .eq("is_active", true)
-      .single();
+      const { data: link, error } = await supabase
+        .from("payment_links")
+        .select("*")
+        .eq("unique_code", data.code)
+        .eq("is_active", true)
+        .single();
 
-    if (error || !link) {
-      throw new Error("Payment link not found or inactive");
-    }
+      if (error || !link) {
+        throw new Error("Payment link not found or inactive");
+      }
 
-    const amount = Number(link.amount);
-    const fee = link.pass_fee_to_buyer ? Math.round(amount * 0.03 * 100) / 100 : 0;
-    const totalCents = Math.round((amount + fee) * 100);
+      const amount = Number(link.amount);
+      const fee = link.pass_fee_to_buyer ? Math.round(amount * 0.03 * 100) / 100 : 0;
+      const totalCents = Math.round((amount + fee) * 100);
 
-    const session = await createStripeCheckoutSession({
-      lineItems: [
-        {
-          price_data: {
-            currency: link.currency.toLowerCase() || "usd",
-            product_data: { name: link.custom_title || "Payment", description: link.description || undefined },
-            unit_amount: totalCents,
+      const session = await createStripeCheckoutSession({
+        lineItems: [
+          {
+            price_data: {
+              currency: link.currency.toLowerCase() || "usd",
+              product_data: { name: link.custom_title || "Payment", description: link.description || undefined },
+              unit_amount: totalCents,
+            },
+            quantity: 1,
           },
-          quantity: 1,
+        ],
+        customerEmail: data.buyerEmail,
+        metadata: {
+          payment_link_code: data.code,
+          buyer_name: data.buyerName,
+          buyer_phone: data.buyerPhone || "",
         },
-      ],
-      customerEmail: data.buyerEmail,
-      metadata: {
-        payment_link_code: data.code,
-        buyer_name: data.buyerName,
-        buyer_phone: data.buyerPhone || "",
-      },
-      successUrl: `${process.env.SITE_URL || "http://localhost:3000"}/pay/${data.code}?status=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${process.env.SITE_URL || "http://localhost:3000"}/pay/${data.code}?status=cancel`,
-    });
+        successUrl: `${process.env.SITE_URL || "http://localhost:3000"}/pay/${data.code}?status=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${process.env.SITE_URL || "http://localhost:3000"}/pay/${data.code}?status=cancel`,
+      });
 
-    return { sessionId: session.id, url: session.url };
+      return { sessionId: session.id, url: session.url };
+    } catch (err: any) {
+      console.error("[stripe-payment-link] Error:", err);
+      throw err;
+    }
   });

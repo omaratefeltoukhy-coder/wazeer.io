@@ -41,10 +41,16 @@ function UgcWriterPage() {
   const [parts, setParts] = useState<{ hook: string; body: string; cta: string; spoken_script: string } | null>(null);
 
   useEffect(() => {
+    let mounted = true;
     (async () => {
       const { data } = await supabase.from("products").select("id, title").order("created_at", { ascending: false }).limit(50);
+      if (!mounted) return;
       setProducts(data ?? []);
-    })();
+    })().catch(() => {
+      if (!mounted) return;
+      setProducts([]);
+    });
+    return () => { mounted = false; };
   }, []);
 
   const onGenerate = async () => {

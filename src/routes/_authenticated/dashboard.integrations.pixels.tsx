@@ -27,15 +27,23 @@ function PixelsPage() {
   const [open, setOpen] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
+    let mounted = true;
     (async () => {
       const { data: ws } = await supabase.from("workspaces").select("id").limit(1).maybeSingle();
       if (!ws) return;
+      if (!mounted) return;
       setWorkspaceId(ws.id);
       const { data } = await supabase.from("pixel_integrations").select("*").eq("workspace_id", ws.id);
+      if (!mounted) return;
       const map: any = {};
       (data ?? []).forEach((p) => { map[p.provider] = { id: p.id, pixel_id: p.pixel_id ?? "", is_active: p.is_active }; });
       setPixels(map);
-    })();
+    })().catch(() => {
+      if (!mounted) return;
+      setWorkspaceId(null);
+      setPixels({});
+    });
+    return () => { mounted = false; };
   }, []);
 
   const save = async (provider: string) => {

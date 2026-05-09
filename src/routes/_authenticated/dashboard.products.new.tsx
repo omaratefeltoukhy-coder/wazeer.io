@@ -58,14 +58,23 @@ function NewProductPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
     (async () => {
       const { data: u } = await supabase.auth.getUser();
+      if (!mounted) return;
       setUserId(u.user?.id ?? null);
       const { data: m } = await supabase.from("workspace_members").select("workspace_id").limit(1).maybeSingle();
-      if (m?.workspace_id) setWorkspaceId(m.workspace_id);
+      if (m?.workspace_id && mounted) setWorkspaceId(m.workspace_id);
       const { data: b } = await supabase.from("businesses").select("id").order("created_at", { ascending: false }).limit(1).maybeSingle();
+      if (!mounted) return;
       setBusinessId(b?.id ?? null);
-    })();
+    })().catch(() => {
+      if (!mounted) return;
+      setUserId(null);
+      setWorkspaceId(null);
+      setBusinessId(null);
+    });
+    return () => { mounted = false; };
   }, []);
 
   const uploadCover = async (e: ChangeEvent<HTMLInputElement>) => {

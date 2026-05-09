@@ -54,8 +54,19 @@ function AutomationBuilder() {
   const delFn = useServerFn(deleteAutomation);
 
   useEffect(() => {
-    supabase.from("businesses").select("id, name").eq("id", businessId).maybeSingle().then(({ data }) => setBiz(data));
+    let mounted = true;
+    (async () => {
+      try {
+        const { data } = await supabase.from("businesses").select("id, name").eq("id", businessId).maybeSingle();
+        if (!mounted) return;
+        setBiz(data);
+      } catch {
+        if (!mounted) return;
+        setBiz(null);
+      }
+    })();
     refresh();
+    return () => { mounted = false; };
   }, [businessId]);
 
   async function refresh() {

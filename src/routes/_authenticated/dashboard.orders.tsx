@@ -54,6 +54,7 @@ function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
   useEffect(() => {
+    let mounted = true;
     (async () => {
       const { data, error } = await supabase
         .from("orders")
@@ -68,13 +69,20 @@ function OrdersPage() {
 
       if (error) {
         toast.error(error.message);
+        if (!mounted) return;
         setOrders([]);
         return;
       }
       const rows = (data ?? []) as unknown as Order[];
+      if (!mounted) return;
       setOrders(rows);
       setFiltered(rows);
-    })();
+    })().catch(() => {
+      if (!mounted) return;
+      setOrders([]);
+      setFiltered([]);
+    });
+    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {

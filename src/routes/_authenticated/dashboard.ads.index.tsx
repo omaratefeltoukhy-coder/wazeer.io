@@ -42,16 +42,24 @@ function AdsListPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let mounted = true;
     (async () => {
       const { data, error } = await supabase
         .from("ad_campaigns")
         .select("id,name,status,budget_daily,spent_amount,result_count,start_date,end_date,meta_campaign_id")
         .order("created_at", { ascending: false });
       if (error) toast.error(error.message);
+      if (!mounted) return;
       setItems((data as any) ?? []);
       const { data: conn } = await supabase.from("meta_connections").select("token_status").limit(1).maybeSingle();
+      if (!mounted) return;
       setMetaConnected(conn?.token_status === "connected");
-    })();
+    })().catch(() => {
+      if (!mounted) return;
+      setItems([]);
+      setMetaConnected(false);
+    });
+    return () => { mounted = false; };
   }, []);
 
   return (

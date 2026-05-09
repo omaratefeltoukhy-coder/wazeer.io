@@ -14,8 +14,18 @@ function AnalyticsList() {
   const [businesses, setBusinesses] = useState<Biz[] | null>(null);
 
   useEffect(() => {
-    supabase.from("businesses").select("id, name").order("created_at", { ascending: false })
-      .then(({ data }) => setBusinesses((data as Biz[]) ?? []));
+    let mounted = true;
+    (async () => {
+      try {
+        const { data } = await supabase.from("businesses").select("id, name").order("created_at", { ascending: false });
+        if (!mounted) return;
+        setBusinesses((data as Biz[]) ?? []);
+      } catch {
+        if (!mounted) return;
+        setBusinesses([]);
+      }
+    })();
+    return () => { mounted = false; };
   }, []);
 
   if (businesses === null) {

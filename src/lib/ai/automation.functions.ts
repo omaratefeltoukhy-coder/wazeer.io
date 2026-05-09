@@ -38,9 +38,14 @@ export const listAutomations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ business_id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { data: rows } = await context.supabase.from("email_automations")
-      .select("*").eq("business_id", data.business_id).order("updated_at", { ascending: false });
-    return { automations: rows ?? [] };
+    try {
+      const { data: rows } = await context.supabase.from("email_automations")
+        .select("*").eq("business_id", data.business_id).order("updated_at", { ascending: false });
+      return { automations: rows ?? [] };
+    } catch (err: any) {
+      console.error("[automation] Error:", err);
+      throw err;
+    }
   });
 
 export const upsertAutomation = createServerFn({ method: "POST" })
@@ -54,19 +59,24 @@ export const upsertAutomation = createServerFn({ method: "POST" })
     status: z.enum(["draft", "active", "paused"]).default("draft"),
   }).parse(input))
   .handler(async ({ data, context }) => {
-    if (data.id) {
-      const { error } = await context.supabase.from("email_automations").update({
-        name: data.name, trigger_type: data.trigger_type, steps_json: data.steps_json as any, status: data.status,
-      }).eq("id", data.id);
+    try {
+      if (data.id) {
+        const { error } = await context.supabase.from("email_automations").update({
+          name: data.name, trigger_type: data.trigger_type, steps_json: data.steps_json as any, status: data.status,
+        }).eq("id", data.id);
+        if (error) throw new Error(error.message);
+        return { id: data.id };
+      }
+      const { data: ins, error } = await context.supabase.from("email_automations").insert({
+        business_id: data.business_id, name: data.name, trigger_type: data.trigger_type,
+        steps_json: data.steps_json as any, status: data.status,
+      }).select("id").single();
       if (error) throw new Error(error.message);
-      return { id: data.id };
+      return { id: ins.id };
+    } catch (err: any) {
+      console.error("[automation] Error:", err);
+      throw err;
     }
-    const { data: ins, error } = await context.supabase.from("email_automations").insert({
-      business_id: data.business_id, name: data.name, trigger_type: data.trigger_type,
-      steps_json: data.steps_json as any, status: data.status,
-    }).select("id").single();
-    if (error) throw new Error(error.message);
-    return { id: ins.id };
   });
 
 export const setAutomationStatus = createServerFn({ method: "POST" })
@@ -76,21 +86,31 @@ export const setAutomationStatus = createServerFn({ method: "POST" })
     status: z.enum(["draft", "active", "paused"]),
   }).parse(input))
   .handler(async ({ data, context }) => {
-    const { data: row } = await context.supabase.from("email_automations").select("business_id").eq("id", data.id).maybeSingle();
-    if (!row) throw new Error("Automation not found");
-    const { error } = await context.supabase.from("email_automations").update({ status: data.status }).eq("id", data.id);
-    if (error) throw new Error(error.message);
-    await audit(context.supabase, row.business_id as string,
-      data.status === "active" ? "start_automation" : data.status === "paused" ? "stop_automation" : "draft_automation",
-      data.id, { status: data.status });
-    return { ok: true };
+    try {
+      const { data: row } = await context.supabase.from("email_automations").select("business_id").eq("id", data.id).maybeSingle();
+      if (!row) throw new Error("Automation not found");
+      const { error } = await context.supabase.from("email_automations").update({ status: data.status }).eq("id", data.id);
+      if (error) throw new Error(error.message);
+      await audit(context.supabase, row.business_id as string,
+        data.status === "active" ? "start_automation" : data.status === "paused" ? "stop_automation" : "draft_automation",
+        data.id, { status: data.status });
+      return { ok: true };
+    } catch (err: any) {
+      console.error("[automation] Error:", err);
+      return { ok: false, error: err.message };
+    }
   });
 
 export const deleteAutomation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("email_automations").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
+    try {
+      const { error } = await context.supabase.from("email_automations").delete().eq("id", data.id);
+      if (error) throw new Error(error.message);
+      return { ok: true };
+    } catch (err: any) {
+      console.error("[automation] Error:", err);
+      return { ok: false, error: err.message };
+    }
   });

@@ -44,12 +44,20 @@ function NewCampaignWizard() {
   const [launching, setLaunching] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
     (async () => {
       const { data: prods } = await supabase.from("products").select("id,title").order("created_at", { ascending: false });
+      if (!mounted) return;
       setProducts(prods ?? []);
       const { data: imgs } = await supabase.from("ai_content").select("id,result_url,prompt").eq("content_type", "image").not("result_url", "is", null).order("created_at", { ascending: false }).limit(20);
+      if (!mounted) return;
       setImages(imgs ?? []);
-    })();
+    })().catch(() => {
+      if (!mounted) return;
+      setProducts([]);
+      setImages([]);
+    });
+    return () => { mounted = false; };
   }, []);
 
   const days = Math.max(1, Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / 86400000));

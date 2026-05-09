@@ -18,14 +18,22 @@ function EmailsList() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
 
   useEffect(() => {
+    let mounted = true;
     (async () => {
       const { data: bz } = await supabase.from("businesses").select("id, name").order("created_at", { ascending: false });
+      if (!mounted) return;
       setBusinesses(bz ?? []);
       const { data: cs, error } = await supabase.from("email_campaigns")
         .select("id, business_id, name, type, status, updated_at").order("updated_at", { ascending: false });
       if (error) toast.error(error.message);
+      if (!mounted) return;
       setCampaigns((cs ?? []) as any);
-    })();
+    })().catch(() => {
+      if (!mounted) return;
+      setBusinesses([]);
+      setCampaigns([]);
+    });
+    return () => { mounted = false; };
   }, []);
 
   if (businesses === null) {

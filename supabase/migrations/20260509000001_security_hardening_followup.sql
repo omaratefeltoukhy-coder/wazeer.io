@@ -164,7 +164,7 @@ GRANT  EXECUTE ON FUNCTION public.record_payment_link_purchase(text, text, text,
 -- =============================================================================
 
 DO $$ BEGIN
-  EXECUTE 'REVOKE EXECUTE ON FUNCTION public.handle_first_workspace_credit_grant() FROM PUBLIC, anon, authenticated';
+  EXECUTE 'REVOKE EXECUTE ON FUNCTION public.seed_workspace_billing() FROM PUBLIC, anon, authenticated';
 EXCEPTION WHEN undefined_function THEN NULL; END $$;
 
 

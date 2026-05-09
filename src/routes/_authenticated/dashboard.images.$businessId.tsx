@@ -61,18 +61,36 @@ function ImagesGenerator() {
   const [brandPreview, setBrandPreview] = useState<{ tone?: string; visual_style?: string; product?: string } | null>(null);
 
   useEffect(() => {
-    supabase.from("businesses").select("name").eq("id", businessId).maybeSingle().then(({ data }) => setBizName(data?.name ?? ""));
-    Promise.all([
-      supabase.from("brand_profiles").select("tone, visual_style").eq("business_id", businessId).maybeSingle(),
-      supabase.from("offers").select("name, description").eq("business_id", businessId).maybeSingle(),
-    ]).then(([brand, offer]) => {
-      setBrandPreview({
-        tone: brand.data?.tone ?? undefined,
-        visual_style: brand.data?.visual_style ?? undefined,
-        product: offer.data?.name ?? undefined,
-      });
-    });
+    let mounted = true;
+    (async () => {
+      try {
+        const { data } = await supabase.from("businesses").select("name").eq("id", businessId).maybeSingle();
+        if (!mounted) return;
+        setBizName(data?.name ?? "");
+      } catch {
+        if (!mounted) return;
+        setBizName("");
+      }
+    })();
+    (async () => {
+      try {
+        const [brand, offer] = await Promise.all([
+          supabase.from("brand_profiles").select("tone, visual_style").eq("business_id", businessId).maybeSingle(),
+          supabase.from("offers").select("name, description").eq("business_id", businessId).maybeSingle(),
+        ]);
+        if (!mounted) return;
+        setBrandPreview({
+          tone: brand.data?.tone ?? undefined,
+          visual_style: brand.data?.visual_style ?? undefined,
+          product: offer.data?.name ?? undefined,
+        });
+      } catch {
+        if (!mounted) return;
+        setBrandPreview(null);
+      }
+    })();
     refresh();
+    return () => { mounted = false; };
   }, [businessId]);
 
   const refresh = async () => {

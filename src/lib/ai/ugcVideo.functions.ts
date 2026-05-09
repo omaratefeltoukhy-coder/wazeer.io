@@ -63,59 +63,64 @@ export const generateStoryboard = createServerFn({ method: "POST" })
     aspect_ratio: z.enum(FORMATS).optional().default("9_16"),
   }).parse(input))
   .handler(async ({ data, context }) => {
-    const { data: script, error } = await context.supabase.from("ugc_scripts")
-      .select("id, business_id, title, platform, script_json").eq("id", data.script_id).maybeSingle();
-    if (error || !script) throw new Error("Script not found");
-    const workspace_id = await loadWorkspaceId(context.supabase, script.business_id as string);
-    await requireEntitlement(workspace_id, "ugc_videos");
-    // Storyboard generation itself is free; we charge only for the video render.
+    try {
+      const { data: script, error } = await context.supabase.from("ugc_scripts")
+        .select("id, business_id, title, platform, script_json").eq("id", data.script_id).maybeSingle();
+      if (error || !script) throw new Error("Script not found");
+      const workspace_id = await loadWorkspaceId(context.supabase, script.business_id as string);
+      await requireEntitlement(workspace_id, "ugc_videos");
+      // Storyboard generation itself is free; we charge only for the video render.
 
-    const sj = (script.script_json ?? {}) as any;
-    const { data: brand } = await context.supabase.from("brand_profiles")
-      .select("brand_name, tone, visual_style, positioning").eq("business_id", script.business_id).maybeSingle();
+      const sj = (script.script_json ?? {}) as any;
+      const { data: brand } = await context.supabase.from("brand_profiles")
+        .select("brand_name, tone, visual_style, positioning").eq("business_id", script.business_id).maybeSingle();
 
-    const tool = {
-      type: "function" as const,
-      function: { name: "build_storyboard", description: "Build a text-to-video storyboard.", parameters: StoryboardSchema as any },
-    };
-    const sysPrompt = `You are Wazeer, a creative producer. Convert a UGC script into a text-to-video storyboard. Each scene_prompt is a self-contained text prompt for a video model. Reply ONLY through the tool. ${SAFETY}`;
-    const userPrompt = `Brand: ${brand?.brand_name ?? "—"} | Tone: ${brand?.tone ?? "—"} | Visual style: ${brand?.visual_style ?? "—"}
-Aspect ratio: ${data.aspect_ratio}
-Title: ${sj.title}
-Hook: ${sj.hook_3s}
-Scenes: ${JSON.stringify(sj.scenes ?? [])}
-CTA: ${sj.cta}`;
+      const tool = {
+        type: "function" as const,
+        function: { name: "build_storyboard", description: "Build a text-to-video storyboard.", parameters: StoryboardSchema as any },
+      };
+      const sysPrompt = `You are Wazeer, a creative producer. Convert a UGC script into a text-to-video storyboard. Each scene_prompt is a self-contained text prompt for a video model. Reply ONLY through the tool. ${SAFETY}`;
+      const userPrompt = `Brand: ${brand?.brand_name ?? "—"} | Tone: ${brand?.tone ?? "—"} | Visual style: ${brand?.visual_style ?? "—"}
+  Aspect ratio: ${data.aspect_ratio}
+  Title: ${sj.title}
+  Hook: ${sj.hook_3s}
+  Scenes: ${JSON.stringify(sj.scenes ?? [])}
+  CTA: ${sj.cta}`;
 
-    const parsed = await callVideoAI(
-      [{ role: "system", content: sysPrompt }, { role: "user", content: userPrompt }],
-      tool, "build_storyboard",
-    );
+      const parsed = await callVideoAI(
+        [{ role: "system", content: sysPrompt }, { role: "user", content: userPrompt }],
+        tool, "build_storyboard",
+      );
 
-    const storyboard_json = {
-      ...parsed,
-      aspect_ratio: data.aspect_ratio,
-      script_title: sj.title,
-      length_s: sj.length_s ?? null,
-      generated_at: new Date().toISOString(),
-    };
+      const storyboard_json = {
+        ...parsed,
+        aspect_ratio: data.aspect_ratio,
+        script_title: sj.title,
+        length_s: sj.length_s ?? null,
+        generated_at: new Date().toISOString(),
+      };
 
-    const { data: existing } = await context.supabase.from("ugc_videos")
-      .select("id").eq("script_id", data.script_id).eq("status", "draft").maybeSingle();
+      const { data: existing } = await context.supabase.from("ugc_videos")
+        .select("id").eq("script_id", data.script_id).eq("status", "draft").maybeSingle();
 
-    if (existing?.id) {
-      const { error: upErr } = await context.supabase.from("ugc_videos")
-        .update({ storyboard_json: storyboard_json as any }).eq("id", existing.id);
-      if (upErr) throw new Error(upErr.message);
-      return { id: existing.id, storyboard: storyboard_json };
+      if (existing?.id) {
+        const { error: upErr } = await context.supabase.from("ugc_videos")
+          .update({ storyboard_json: storyboard_json as any }).eq("id", existing.id);
+        if (upErr) throw new Error(upErr.message);
+        return { id: existing.id, storyboard: storyboard_json };
+      }
+      const { data: row, error: insErr } = await context.supabase.from("ugc_videos").insert({
+        business_id: script.business_id,
+        script_id: data.script_id,
+        status: "draft",
+        storyboard_json: storyboard_json as any,
+      }).select("id").single();
+      if (insErr) throw new Error(insErr.message);
+      return { id: row!.id, storyboard: storyboard_json };
+    } catch (err: any) {
+      console.error("[ugcVideo] Error:", err);
+      throw err;
     }
-    const { data: row, error: insErr } = await context.supabase.from("ugc_videos").insert({
-      business_id: script.business_id,
-      script_id: data.script_id,
-      status: "draft",
-      storyboard_json: storyboard_json as any,
-    }).select("id").single();
-    if (insErr) throw new Error(insErr.message);
-    return { id: row!.id, storyboard: storyboard_json };
   });
 
 export const updateStoryboard = createServerFn({ method: "POST" })
@@ -125,10 +130,15 @@ export const updateStoryboard = createServerFn({ method: "POST" })
     storyboard_json: z.record(z.string(), z.any()),
   }).parse(input))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("ugc_videos")
-      .update({ storyboard_json: data.storyboard_json as any }).eq("id", data.video_id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
+    try {
+      const { error } = await context.supabase.from("ugc_videos")
+        .update({ storyboard_json: data.storyboard_json as any }).eq("id", data.video_id);
+      if (error) throw new Error(error.message);
+      return { ok: true };
+    } catch (err: any) {
+      console.error("[ugcVideo] Error:", err);
+      return { ok: false, error: err.message };
+    }
   });
 
 export const regenerateStoryboardScene = createServerFn({ method: "POST" })
@@ -257,28 +267,38 @@ export const listUgcVideos = createServerFn({ method: "POST" })
     limit: z.number().int().min(1).max(100).optional().default(50),
   }).parse(input))
   .handler(async ({ data, context }) => {
-    let q = context.supabase.from("ugc_videos")
-      .select("id, business_id, script_id, status, video_url, storyboard_json, error_message, created_at")
-      .order("created_at", { ascending: false }).limit(data.limit);
-    if (data.business_id) q = q.eq("business_id", data.business_id);
-    if (data.status) q = q.eq("status", data.status as any);
-    const { data: rows, error } = await q;
-    if (error) throw new Error(error.message);
-    return { items: rows ?? [] };
+    try {
+      let q = context.supabase.from("ugc_videos")
+        .select("id, business_id, script_id, status, video_url, storyboard_json, error_message, created_at")
+        .order("created_at", { ascending: false }).limit(data.limit);
+      if (data.business_id) q = q.eq("business_id", data.business_id);
+      if (data.status) q = q.eq("status", data.status as any);
+      const { data: rows, error } = await q;
+      if (error) throw new Error(error.message);
+      return { items: rows ?? [] };
+    } catch (err: any) {
+      console.error("[ugcVideo] Error:", err);
+      throw err;
+    }
   });
 
 export const getUgcVideo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ video_id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { data: vid, error } = await context.supabase.from("ugc_videos")
-      .select("id, business_id, script_id, status, video_url, storyboard_json, error_message, provider_job_id, created_at, updated_at").eq("id", data.video_id).maybeSingle();
-    if (error || !vid) throw new Error("Video not found");
-    const { data: biz } = await context.supabase.from("businesses").select("name").eq("id", vid.business_id).maybeSingle();
-    const { data: script } = vid.script_id
-      ? await context.supabase.from("ugc_scripts").select("id, title, platform").eq("id", vid.script_id).maybeSingle()
-      : { data: null } as any;
-    return { video: vid, business: biz, script };
+    try {
+      const { data: vid, error } = await context.supabase.from("ugc_videos")
+        .select("id, business_id, script_id, status, video_url, storyboard_json, error_message, provider_job_id, created_at, updated_at").eq("id", data.video_id).maybeSingle();
+      if (error || !vid) throw new Error("Video not found");
+      const { data: biz } = await context.supabase.from("businesses").select("name").eq("id", vid.business_id).maybeSingle();
+      const { data: script } = vid.script_id
+        ? await context.supabase.from("ugc_scripts").select("id, title, platform").eq("id", vid.script_id).maybeSingle()
+        : { data: null } as any;
+      return { video: vid, business: biz, script };
+    } catch (err: any) {
+      console.error("[ugcVideo] Error:", err);
+      throw err;
+    }
   });
 
 export const useVideoForMeta = createServerFn({ method: "POST" })
@@ -288,25 +308,35 @@ export const useVideoForMeta = createServerFn({ method: "POST" })
     target: z.enum(["post", "ad"]),
   }).parse(input))
   .handler(async ({ data, context }) => {
-    const { data: vid, error } = await context.supabase.from("ugc_videos")
-      .select("id, storyboard_json, status").eq("id", data.video_id).maybeSingle();
-    if (error || !vid) throw new Error("Video not found");
-    if (vid.status !== "ready") throw new Error("Video not ready yet");
-    const sb = (vid.storyboard_json ?? {}) as any;
-    // Mark as posted + record where it was queued. Stage 7 (Meta) will pick this up.
-    const next = { ...sb, used_for: data.target, queued_at: new Date().toISOString() };
-    const { error: upErr } = await context.supabase.from("ugc_videos").update({
-      status: "posted", storyboard_json: next as any,
-    }).eq("id", vid.id);
-    if (upErr) throw new Error(upErr.message);
-    return { ok: true, target: data.target };
+    try {
+      const { data: vid, error } = await context.supabase.from("ugc_videos")
+        .select("id, storyboard_json, status").eq("id", data.video_id).maybeSingle();
+      if (error || !vid) throw new Error("Video not found");
+      if (vid.status !== "ready") throw new Error("Video not ready yet");
+      const sb = (vid.storyboard_json ?? {}) as any;
+      // Mark as posted + record where it was queued. Stage 7 (Meta) will pick this up.
+      const next = { ...sb, used_for: data.target, queued_at: new Date().toISOString() };
+      const { error: upErr } = await context.supabase.from("ugc_videos").update({
+        status: "posted", storyboard_json: next as any,
+      }).eq("id", vid.id);
+      if (upErr) throw new Error(upErr.message);
+      return { ok: true, target: data.target };
+    } catch (err: any) {
+      console.error("[ugcVideo] Error:", err);
+      return { ok: false, error: err.message };
+    }
   });
 
 export const deleteUgcVideo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ video_id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("ugc_videos").delete().eq("id", data.video_id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
+    try {
+      const { error } = await context.supabase.from("ugc_videos").delete().eq("id", data.video_id);
+      if (error) throw new Error(error.message);
+      return { ok: true };
+    } catch (err: any) {
+      console.error("[ugcVideo] Error:", err);
+      return { ok: false, error: err.message };
+    }
   });

@@ -11,6 +11,7 @@ import {
   wrapEmailBody,
   trackEmailEvent,
 } from "@/lib/email/resend.server";
+import { consumeCredits, requireEntitlement, incrementUsage } from "@/lib/billing/guard.server";
 
 async function getBusinessId(supabase: any): Promise<string> {
   const { data, error } = await supabase
@@ -19,19 +20,38 @@ async function getBusinessId(supabase: any): Promise<string> {
   return data.id as string;
 }
 
+async function workspaceFor(supabase: any, userId: string): Promise<string> {
+  const { data, error } = await supabase
+    .from("workspace_members")
+    .select("workspace_id")
+    .eq("user_id", userId)
+    .limit(1)
+    .maybeSingle();
+  if (error || !data) throw new Error("Workspace not found");
+  return data.workspace_id as string;
+}
+
 /* ─────────────── AI helpers ─────────────── */
 
 export const generateCampaignSubject = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ goal: z.string().max(500).optional().default("") }).parse(i))
-  .handler(async ({ data }) => {
-    const aiRes = await callAI({
-      messages: [
-        { role: "system", content: "You write concise, high-open-rate email subject lines under 60 chars. Reply with the subject only — no quotes, no prefix." },
-        { role: "user", content: `Goal/topic: ${data.goal || "general newsletter"}` },
-      ],
-    });
-    return { subject: (aiRes.content || "").trim() };
+  .handler(async ({ data, context }) => {
+    try {
+      const workspace_id = await workspaceFor(context.supabase, context.userId);
+      await requireEntitlement(workspace_id, "email_campaigns");
+      await consumeCredits(workspace_id, "email_regenerate", { user_id: context.userId });
+      const aiRes = await callAI({
+        messages: [
+          { role: "system", content: "You write concise, high-open-rate email subject lines under 60 chars. Reply with the subject only — no quotes, no prefix." },
+          { role: "user", content: `Goal/topic: ${data.goal || "general newsletter"}` },
+        ],
+      });
+      return { subject: (aiRes.content || "").trim() };
+    } catch (err: any) {
+      console.error("[marketing] Error:", err);
+      throw err;
+    }
   });
 
 export const generateCampaignBody = createServerFn({ method: "POST" })
@@ -39,14 +59,22 @@ export const generateCampaignBody = createServerFn({ method: "POST" })
   .inputValidator((i) =>
     z.object({ subject: z.string().max(200).optional().default(""), goal: z.string().max(800).optional().default("") }).parse(i),
   )
-  .handler(async ({ data }) => {
-    const aiRes = await callAI({
-      messages: [
-        { role: "system", content: "You write friendly, persuasive marketing email bodies in clean HTML. Use <h2>, <p>, and <a>. No <html>/<body> tags. 120-220 words. End with a clear CTA. Avoid invented claims." },
-        { role: "user", content: `Subject: ${data.subject}\nGoal: ${data.goal || "engage subscribers"}` },
-      ],
-    });
-    return { body_html: (aiRes.content || "").trim() };
+  .handler(async ({ data, context }) => {
+    try {
+      const workspace_id = await workspaceFor(context.supabase, context.userId);
+      await requireEntitlement(workspace_id, "email_campaigns");
+      await consumeCredits(workspace_id, "email_regenerate", { user_id: context.userId });
+      const aiRes = await callAI({
+        messages: [
+          { role: "system", content: "You write friendly, persuasive marketing email bodies in clean HTML. Use <h2>, <p>, and <a>. No <html>/<body> tags. 120-220 words. End with a clear CTA. Avoid invented claims." },
+          { role: "user", content: `Subject: ${data.subject}\nGoal: ${data.goal || "engage subscribers"}` },
+        ],
+      });
+      return { body_html: (aiRes.content || "").trim() };
+    } catch (err: any) {
+      console.error("[marketing] Error:", err);
+      throw err;
+    }
   });
 
 /* ─────────────── Audience resolution ─────────────── */
@@ -90,22 +118,32 @@ async function sendOneViaResend(opts: { from: string; to: string; subject: strin
 export const listCampaigns = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: rows, error } = await context.supabase
-      .from("email_campaigns")
-      .select("id, name, subject, audience_type, status, recipients_count, opens_count, clicks_count, sent_at, scheduled_at, created_at")
-      .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
-    return { items: rows ?? [] };
+    try {
+      const { data: rows, error } = await context.supabase
+        .from("email_campaigns")
+        .select("id, name, subject, audience_type, status, recipients_count, opens_count, clicks_count, sent_at, scheduled_at, created_at")
+        .order("created_at", { ascending: false });
+      if (error) throw new Error(error.message);
+      return { items: rows ?? [] };
+    } catch (err: any) {
+      console.error("[marketing] Error:", err);
+      throw err;
+    }
   });
 
 export const getCampaign = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    const { data: row, error } = await context.supabase
-      .from("email_campaigns").select("*").eq("id", data.id).maybeSingle();
-    if (error || !row) throw new Error("Campaign not found");
-    return { campaign: row };
+    try {
+      const { data: row, error } = await context.supabase
+        .from("email_campaigns").select("*").eq("id", data.id).maybeSingle();
+      if (error || !row) throw new Error("Campaign not found");
+      return { campaign: row };
+    } catch (err: any) {
+      console.error("[marketing] Error:", err);
+      throw err;
+    }
   });
 
 export const upsertCampaign = createServerFn({ method: "POST" })
@@ -122,118 +160,143 @@ export const upsertCampaign = createServerFn({ method: "POST" })
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
-    const business_id = await getBusinessId(context.supabase);
-    const payload: any = {
-      business_id,
-      name: data.name,
-      subject: data.subject,
-      body_html: data.body_html,
-      audience_type: data.audience_type,
-      content_json: { manual_emails: data.manual_emails ?? [] },
-      scheduled_at: data.scheduled_at ?? null,
-      status: data.scheduled_at ? "scheduled" : "draft",
-    };
-    if (data.id) {
-      const { error } = await context.supabase.from("email_campaigns").update(payload).eq("id", data.id);
-      if (error) throw new Error(error.message);
-      return { id: data.id };
+    try {
+      const business_id = await getBusinessId(context.supabase);
+      const payload: any = {
+        business_id,
+        name: data.name,
+        subject: data.subject,
+        body_html: data.body_html,
+        audience_type: data.audience_type,
+        content_json: { manual_emails: data.manual_emails ?? [] },
+        scheduled_at: data.scheduled_at ?? null,
+        status: data.scheduled_at ? "scheduled" : "draft",
+      };
+      if (data.id) {
+        const { error } = await context.supabase.from("email_campaigns").update(payload).eq("id", data.id);
+        if (error) throw new Error(error.message);
+        return { id: data.id };
+      }
+      const { data: row, error } = await context.supabase.from("email_campaigns").insert(payload).select("id").single();
+      if (error || !row) throw new Error(error?.message || "Failed");
+      return { id: row.id };
+    } catch (err: any) {
+      console.error("[marketing] Error:", err);
+      throw err;
     }
-    const { data: row, error } = await context.supabase.from("email_campaigns").insert(payload).select("id").single();
-    if (error || !row) throw new Error(error?.message || "Failed");
-    return { id: row.id };
   });
 
 export const sendCampaign = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    const { data: c, error } = await context.supabase
-      .from("email_campaigns").select("*").eq("id", data.id).maybeSingle();
-    if (error || !c) throw new Error("Campaign not found");
-    const audience_type = (c.audience_type as string) || "all";
-    const manual = ((c.content_json as any)?.manual_emails as string[]) || [];
-    const recipients = await resolveAudience(c.business_id as string, audience_type, manual);
-    if (!recipients.length) throw new Error("No recipients matched the audience.");
+    try {
+      const workspace_id = await workspaceFor(context.supabase, context.userId);
+      await requireEntitlement(workspace_id, "email_campaigns");
+      await consumeCredits(workspace_id, "email_campaign", { user_id: context.userId });
+      await incrementUsage(workspace_id, "email_campaigns");
 
-    const from = process.env.MARKETING_FROM_EMAIL || "Marketing <onboarding@wazeer.io>";
-    let mocked = !process.env.RESEND_API_KEY;
+      const { data: c, error } = await context.supabase
+        .from("email_campaigns").select("*").eq("id", data.id).maybeSingle();
+      if (error || !c) throw new Error("Campaign not found");
+      const audience_type = (c.audience_type as string) || "all";
+      const manual = ((c.content_json as any)?.manual_emails as string[]) || [];
+      const recipients = await resolveAudience(c.business_id as string, audience_type, manual);
+      if (!recipients.length) throw new Error("No recipients matched the audience.");
 
-    const emails: any[] = [];
-    for (const r of recipients.slice(0, 500)) {
-      const token = await getOrCreateUnsubscribeToken(c.business_id as string, r.id ?? undefined, r.email);
-      const unsubscribeUrl = buildUnsubscribeUrl(token);
-      const html = wrapEmailBody(c.body_html as string, { unsubscribeUrl });
-      emails.push({
-        from,
-        to: r.email,
-        subject: c.subject as string,
-        html,
-        tags: [
-          { name: "business_id", value: c.business_id as string },
-          { name: "campaign_id", value: c.id as string },
-          { name: "contact_id", value: r.id ?? "" },
-        ],
-        metadata: { contact_id: r.id, email: r.email },
-      });
-    }
+      const from = process.env.MARKETING_FROM_EMAIL || "Marketing <onboarding@wazeer.io>";
+      let mocked = !process.env.RESEND_API_KEY;
 
-    const batchResult = await sendEmailBatchViaResend(emails);
-    let sent = 0;
-    let failed = 0;
-
-    for (let i = 0; i < batchResult.results.length; i++) {
-      const r = batchResult.results[i];
-      const meta = emails[i].metadata;
-      if (r.resendId) {
-        sent++;
-        await trackEmailEvent({
-          business_id: c.business_id as string,
-          campaign_id: c.id as string,
-          contact_id: meta.contact_id,
-          event_type: "sent",
-          resend_id: r.resendId,
-          email: meta.email,
-        });
-      } else {
-        failed++;
-        await trackEmailEvent({
-          business_id: c.business_id as string,
-          campaign_id: c.id as string,
-          contact_id: meta.contact_id,
-          event_type: "failed",
-          email: meta.email,
-          metadata: { error: r.error },
+      const emails: any[] = [];
+      for (const r of recipients.slice(0, 500)) {
+        const token = await getOrCreateUnsubscribeToken(c.business_id as string, r.id ?? undefined, r.email);
+        const unsubscribeUrl = buildUnsubscribeUrl(token);
+        const html = wrapEmailBody(c.body_html as string, { unsubscribeUrl });
+        emails.push({
+          from,
+          to: r.email,
+          subject: c.subject as string,
+          html,
+          tags: [
+            { name: "business_id", value: c.business_id as string },
+            { name: "campaign_id", value: c.id as string },
+            { name: "contact_id", value: r.id ?? "" },
+          ],
+          metadata: { contact_id: r.id, email: r.email },
         });
       }
+
+      const batchResult = await sendEmailBatchViaResend(emails);
+      let sent = 0;
+      let failed = 0;
+
+      for (let i = 0; i < batchResult.results.length; i++) {
+        const r = batchResult.results[i];
+        const meta = emails[i].metadata;
+        if (r.resendId) {
+          sent++;
+          await trackEmailEvent({
+            business_id: c.business_id as string,
+            campaign_id: c.id as string,
+            contact_id: meta.contact_id,
+            event_type: "sent",
+            resend_id: r.resendId,
+            email: meta.email,
+          });
+        } else {
+          failed++;
+          await trackEmailEvent({
+            business_id: c.business_id as string,
+            campaign_id: c.id as string,
+            contact_id: meta.contact_id,
+            event_type: "failed",
+            email: meta.email,
+            metadata: { error: r.error },
+          });
+        }
+      }
+
+      await context.supabase.from("email_campaigns").update({
+        status: "sent",
+        sent_at: new Date().toISOString(),
+        recipients_count: recipients.length,
+      }).eq("id", c.id);
+
+      return { ok: true, sent, failed, mock: mocked, total: recipients.length };
+    } catch (err: any) {
+      console.error("[marketing] Error:", err);
+      return { ok: false, error: err.message };
     }
-
-    await context.supabase.from("email_campaigns").update({
-      status: "sent",
-      sent_at: new Date().toISOString(),
-      recipients_count: recipients.length,
-    }).eq("id", c.id);
-
-    return { ok: true, sent, failed, mock: mocked, total: recipients.length };
   });
 
 export const deleteCampaign = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("email_campaigns").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
+    try {
+      const { error } = await context.supabase.from("email_campaigns").delete().eq("id", data.id);
+      if (error) throw new Error(error.message);
+      return { ok: true };
+    } catch (err: any) {
+      console.error("[marketing] Error:", err);
+      return { ok: false, error: err.message };
+    }
   });
 
 export const getCampaignStats = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    const { data: events } = await context.supabase
-      .from("email_events").select("event_type, created_at").eq("campaign_id", data.id);
-    const counts = { sent: 0, opened: 0, clicked: 0, bounced: 0, unsubscribed: 0, failed: 0 } as Record<string, number>;
-    (events ?? []).forEach((e) => { counts[e.event_type as string] = (counts[e.event_type as string] ?? 0) + 1; });
-    return { counts, events: events ?? [] };
+    try {
+      const { data: events } = await context.supabase
+        .from("email_events").select("event_type, created_at").eq("campaign_id", data.id);
+      const counts = { sent: 0, opened: 0, clicked: 0, bounced: 0, unsubscribed: 0, failed: 0 } as Record<string, number>;
+      (events ?? []).forEach((e) => { counts[e.event_type as string] = (counts[e.event_type as string] ?? 0) + 1; });
+      return { counts, events: events ?? [] };
+    } catch (err: any) {
+      console.error("[marketing] Error:", err);
+      throw err;
+    }
   });
 
 /* ─────────────── Automations ─────────────── */
@@ -244,37 +307,47 @@ export type AutomationType = typeof AUTOMATION_TYPES[number];
 export const triggerAutomationWorker = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!supabaseUrl || !serviceKey) throw new Error("Missing Supabase configuration");
+    try {
+      const supabaseUrl = process.env.SUPABASE_URL;
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (!supabaseUrl || !serviceKey) throw new Error("Missing Supabase configuration");
 
-    const res = await fetch(`${supabaseUrl}/functions/v1/email-automations-process`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${serviceKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({}),
-    });
+      const res = await fetch(`${supabaseUrl}/functions/v1/email-automations-process`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${serviceKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Automation worker failed: ${res.status} ${text.slice(0, 200)}`);
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Automation worker failed: ${res.status} ${text.slice(0, 200)}`);
+      }
+      return res.json();
+    } catch (err: any) {
+      console.error("[marketing] Error:", err);
+      throw err;
     }
-    return res.json();
   });
 
 export const listAutomations = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const business_id = await getBusinessId(context.supabase);
-    const { data, error } = await context.supabase
-      .from("email_automations")
-      .select("id, automation_type, name, is_active, subject, body_html, delay_minutes, sent_count, opens_count")
-      .eq("business_id", business_id)
-      .not("automation_type", "is", null);
-    if (error) throw new Error(error.message);
-    return { items: data ?? [], business_id };
+    try {
+      const business_id = await getBusinessId(context.supabase);
+      const { data, error } = await context.supabase
+        .from("email_automations")
+        .select("id, automation_type, name, is_active, subject, body_html, delay_minutes, sent_count, opens_count")
+        .eq("business_id", business_id)
+        .not("automation_type", "is", null);
+      if (error) throw new Error(error.message);
+      return { items: data ?? [], business_id };
+    } catch (err: any) {
+      console.error("[marketing] Error:", err);
+      throw err;
+    }
   });
 
 export const upsertAutomation = createServerFn({ method: "POST" })
@@ -289,41 +362,46 @@ export const upsertAutomation = createServerFn({ method: "POST" })
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
-    const business_id = await getBusinessId(context.supabase);
-    const defaults: Record<string, { name: string; subject: string; delay: number; body: string }> = {
-      welcome: { name: "Welcome", subject: "Welcome aboard!", delay: 0, body: "<h2>Welcome!</h2><p>We're glad to have you.</p>" },
-      abandoned_checkout: { name: "Abandoned Checkout", subject: "You left something behind", delay: 60, body: "<h2>Still thinking it over?</h2><p>Your cart is waiting.</p>" },
-      post_purchase: { name: "Post-Purchase Thank You", subject: "Thanks for your order!", delay: 0, body: "<h2>Thank you!</h2><p>Your order means the world.</p>" },
-      re_engagement: { name: "Re-engagement", subject: "We miss you", delay: 60 * 24 * 30, body: "<h2>Long time no see</h2><p>Here's what's new.</p>" },
-    };
-    const def = defaults[data.automation_type];
+    try {
+      const business_id = await getBusinessId(context.supabase);
+      const defaults: Record<string, { name: string; subject: string; delay: number; body: string }> = {
+        welcome: { name: "Welcome", subject: "Welcome aboard!", delay: 0, body: "<h2>Welcome!</h2><p>We're glad to have you.</p>" },
+        abandoned_checkout: { name: "Abandoned Checkout", subject: "You left something behind", delay: 60, body: "<h2>Still thinking it over?</h2><p>Your cart is waiting.</p>" },
+        post_purchase: { name: "Post-Purchase Thank You", subject: "Thanks for your order!", delay: 0, body: "<h2>Thank you!</h2><p>Your order means the world.</p>" },
+        re_engagement: { name: "Re-engagement", subject: "We miss you", delay: 60 * 24 * 30, body: "<h2>Long time no see</h2><p>Here's what's new.</p>" },
+      };
+      const def = defaults[data.automation_type];
 
-    const { data: existing } = await context.supabase
-      .from("email_automations").select("id")
-      .eq("business_id", business_id).eq("automation_type", data.automation_type).maybeSingle();
+      const { data: existing } = await context.supabase
+        .from("email_automations").select("id")
+        .eq("business_id", business_id).eq("automation_type", data.automation_type).maybeSingle();
 
-    const patch: any = {};
-    if (data.is_active !== undefined) patch.is_active = data.is_active;
-    if (data.subject !== undefined) patch.subject = data.subject;
-    if (data.body_html !== undefined) patch.body_html = data.body_html;
-    if (data.delay_minutes !== undefined) patch.delay_minutes = data.delay_minutes;
+      const patch: any = {};
+      if (data.is_active !== undefined) patch.is_active = data.is_active;
+      if (data.subject !== undefined) patch.subject = data.subject;
+      if (data.body_html !== undefined) patch.body_html = data.body_html;
+      if (data.delay_minutes !== undefined) patch.delay_minutes = data.delay_minutes;
 
-    if (existing) {
-      const { error } = await context.supabase.from("email_automations").update(patch).eq("id", existing.id);
-      if (error) throw new Error(error.message);
-      return { id: existing.id };
+      if (existing) {
+        const { error } = await context.supabase.from("email_automations").update(patch).eq("id", existing.id);
+        if (error) throw new Error(error.message);
+        return { id: existing.id };
+      }
+      const { data: row, error } = await context.supabase.from("email_automations").insert({
+        business_id,
+        automation_type: data.automation_type,
+        name: def.name,
+        subject: data.subject ?? def.subject,
+        body_html: data.body_html ?? def.body,
+        delay_minutes: data.delay_minutes ?? def.delay,
+        is_active: data.is_active ?? false,
+        status: "active",
+        trigger_type: data.automation_type,
+      }).select("id").single();
+      if (error || !row) throw new Error(error?.message || "Failed");
+      return { id: row.id };
+    } catch (err: any) {
+      console.error("[marketing] Error:", err);
+      throw err;
     }
-    const { data: row, error } = await context.supabase.from("email_automations").insert({
-      business_id,
-      automation_type: data.automation_type,
-      name: def.name,
-      subject: data.subject ?? def.subject,
-      body_html: data.body_html ?? def.body,
-      delay_minutes: data.delay_minutes ?? def.delay,
-      is_active: data.is_active ?? false,
-      status: "active",
-      trigger_type: data.automation_type,
-    }).select("id").single();
-    if (error || !row) throw new Error(error?.message || "Failed");
-    return { id: row.id };
   });

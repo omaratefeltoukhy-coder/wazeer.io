@@ -25,13 +25,19 @@ function DomainsPage() {
   const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
+    let mounted = true;
     (async () => {
       const { data } = await supabase
         .from("businesses")
         .select("id, name, slug, storefronts ( slug, published_url )")
         .order("created_at", { ascending: false });
+      if (!mounted) return;
       setBiz((data ?? []) as unknown as Biz[]);
-    })();
+    })().catch(() => {
+      if (!mounted) return;
+      setBiz([]);
+    });
+    return () => { mounted = false; };
   }, []);
 
   const saveDomain = async (businessId: string, domain: string) => {

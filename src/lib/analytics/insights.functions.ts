@@ -30,100 +30,110 @@ export const getAnalyticsRollup = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ business_id: z.string().uuid(), days: z.number().int().min(1).max(365).default(30) }).parse(input))
   .handler(async ({ data, context }) => {
-    const biz = await assertAccess(context.supabase, data.business_id);
-    const end = new Date();
-    const start = new Date(Date.now() - data.days * 86400000);
-    const startIso = start.toISOString();
+    try {
+      const biz = await assertAccess(context.supabase, data.business_id);
+      const end = new Date();
+      const start = new Date(Date.now() - data.days * 86400000);
+      const startIso = start.toISOString();
 
-    const [
-      storefront, orders, emailCampaigns, emailEvents, posts, campaigns, ads,
-      scripts, videos, contacts, creditTx,
-    ] = await Promise.all([
-      supabaseAdmin.from("storefronts").select("status, content_json").eq("business_id", biz.id).maybeSingle(),
-      supabaseAdmin.from("orders").select("amount, payment_status, created_at").eq("business_id", biz.id).gte("created_at", startIso),
-      supabaseAdmin.from("email_campaigns").select("id, status").eq("business_id", biz.id),
-      supabaseAdmin.from("email_events").select("event_type, created_at").eq("business_id", biz.id).gte("created_at", startIso),
-      supabaseAdmin.from("meta_posts").select("status, created_at").eq("business_id", biz.id),
-      supabaseAdmin.from("meta_campaigns").select("status, insights_json").eq("business_id", biz.id),
-      supabaseAdmin.from("meta_ads").select("status, insights_json").eq("business_id", biz.id),
-      supabaseAdmin.from("ugc_scripts").select("id").eq("business_id", biz.id),
-      supabaseAdmin.from("ugc_videos").select("status").eq("business_id", biz.id),
-      supabaseAdmin.from("contacts").select("status, created_at, unsubscribed_at").eq("business_id", biz.id),
-      supabaseAdmin.from("credit_transactions").select("amount, reason, created_at, metadata_json").eq("workspace_id", biz.workspace_id).gte("created_at", startIso),
-    ]);
+      const [
+        storefront, orders, emailCampaigns, emailEvents, posts, campaigns, ads,
+        scripts, videos, contacts, creditTx,
+      ] = await Promise.all([
+        supabaseAdmin.from("storefronts").select("status, content_json").eq("business_id", biz.id).maybeSingle(),
+        supabaseAdmin.from("orders").select("amount, payment_status, created_at").eq("business_id", biz.id).gte("created_at", startIso),
+        supabaseAdmin.from("email_campaigns").select("id, status").eq("business_id", biz.id),
+        supabaseAdmin.from("email_events").select("event_type, created_at").eq("business_id", biz.id).gte("created_at", startIso),
+        supabaseAdmin.from("meta_posts").select("status, created_at").eq("business_id", biz.id),
+        supabaseAdmin.from("meta_campaigns").select("status, insights_json").eq("business_id", biz.id),
+        supabaseAdmin.from("meta_ads").select("status, insights_json").eq("business_id", biz.id),
+        supabaseAdmin.from("ugc_scripts").select("id").eq("business_id", biz.id),
+        supabaseAdmin.from("ugc_videos").select("status").eq("business_id", biz.id),
+        supabaseAdmin.from("contacts").select("status, created_at, unsubscribed_at").eq("business_id", biz.id),
+        supabaseAdmin.from("credit_transactions").select("amount, reason, created_at, metadata_json").eq("workspace_id", biz.workspace_id).gte("created_at", startIso),
+      ]);
 
-    const sfViews = (storefront.data?.content_json as any)?.analytics?.views ?? 0;
-    const paidOrders = (orders.data ?? []).filter((o) => o.payment_status === "paid");
-    const revenue = paidOrders.reduce((s, o) => s + Number(o.amount ?? 0), 0);
-    const orderCount = paidOrders.length;
-    const conv = sfViews > 0 ? (orderCount / sfViews) * 100 : 0;
+      const sfViews = (storefront.data?.content_json as any)?.analytics?.views ?? 0;
+      const paidOrders = (orders.data ?? []).filter((o) => o.payment_status === "paid");
+      const revenue = paidOrders.reduce((s, o) => s + Number(o.amount ?? 0), 0);
+      const orderCount = paidOrders.length;
+      const conv = sfViews > 0 ? (orderCount / sfViews) * 100 : 0;
 
-    const ev = emailEvents.data ?? [];
-    const count = (t: string) => ev.filter((e) => e.event_type === t).length;
-    const sent = count("sent"), delivered = count("delivered"), opens = count("opened"), clicks = count("clicked"), unsubs = count("unsubscribed");
+      const ev = emailEvents.data ?? [];
+      const count = (t: string) => ev.filter((e) => e.event_type === t).length;
+      const sent = count("sent"), delivered = count("delivered"), opens = count("opened"), clicks = count("clicked"), unsubs = count("unsubscribed");
 
-    const adSpend = (ads.data ?? []).reduce((s, a) => s + Number((a.insights_json as any)?.spend ?? 0), 0);
-    const adImps = (ads.data ?? []).reduce((s, a) => s + Number((a.insights_json as any)?.impressions ?? 0), 0);
-    const adClicks = (ads.data ?? []).reduce((s, a) => s + Number((a.insights_json as any)?.clicks ?? 0), 0);
+      const adSpend = (ads.data ?? []).reduce((s, a) => s + Number((a.insights_json as any)?.spend ?? 0), 0);
+      const adImps = (ads.data ?? []).reduce((s, a) => s + Number((a.insights_json as any)?.impressions ?? 0), 0);
+      const adClicks = (ads.data ?? []).reduce((s, a) => s + Number((a.insights_json as any)?.clicks ?? 0), 0);
 
-    const txAgg: Record<string, number> = {};
-    let spent = 0;
-    for (const t of creditTx.data ?? []) {
-      if ((t.amount ?? 0) < 0) {
-        const amt = Math.abs(t.amount);
-        spent += amt;
-        const r = t.reason ?? "other";
-        txAgg[r] = (txAgg[r] ?? 0) + amt;
+      const txAgg: Record<string, number> = {};
+      let spent = 0;
+      for (const t of creditTx.data ?? []) {
+        if ((t.amount ?? 0) < 0) {
+          const amt = Math.abs(t.amount);
+          spent += amt;
+          const r = t.reason ?? "other";
+          txAgg[r] = (txAgg[r] ?? 0) + amt;
+        }
       }
-    }
-    const topActions = Object.entries(txAgg).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([reason, total]) => ({ reason, total }));
+      const topActions = Object.entries(txAgg).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([reason, total]) => ({ reason, total }));
 
-    const rollup: AnalyticsRollup = {
-      business: { id: biz.id, name: biz.name },
-      period: { start: start.toISOString(), end: end.toISOString() },
-      storefront: { status: storefront.data?.status ?? "draft", views: sfViews, orders: orderCount, revenue, conversion_rate: Math.round(conv * 100) / 100 },
-      email: {
-        campaigns: (emailCampaigns.data ?? []).length,
-        sent, delivered, opens, clicks, unsubs,
-        open_rate: delivered > 0 ? Math.round((opens / delivered) * 1000) / 10 : 0,
-        click_rate: delivered > 0 ? Math.round((clicks / delivered) * 1000) / 10 : 0,
-      },
-      meta: {
-        posts_published: (posts.data ?? []).filter((p) => p.status === "posted").length,
-        posts_drafts: (posts.data ?? []).filter((p) => p.status !== "posted").length,
-        campaigns_active: (campaigns.data ?? []).filter((c) => c.status === "active").length,
-        ad_spend: Math.round(adSpend * 100) / 100,
-        impressions: adImps,
-        clicks: adClicks,
-        ctr: adImps > 0 ? Math.round((adClicks / adImps) * 1000) / 10 : 0,
-      },
-      ugc: {
-        scripts: (scripts.data ?? []).length,
-        videos_ready: (videos.data ?? []).filter((v) => v.status === "ready").length,
-        videos_rendering: (videos.data ?? []).filter((v) => v.status !== "ready" && v.status !== "failed" && v.status !== "draft").length,
-      },
-      contacts: {
-        total: (contacts.data ?? []).filter((c) => c.status !== "suppressed").length,
-        new_this_period: (contacts.data ?? []).filter((c) => c.created_at && new Date(c.created_at) >= start).length,
-        unsubscribed: (contacts.data ?? []).filter((c) => !!c.unsubscribed_at).length,
-      },
-      credits: { spent_this_period: spent, top_actions: topActions },
-    };
-    return rollup;
+      const rollup: AnalyticsRollup = {
+        business: { id: biz.id, name: biz.name },
+        period: { start: start.toISOString(), end: end.toISOString() },
+        storefront: { status: storefront.data?.status ?? "draft", views: sfViews, orders: orderCount, revenue, conversion_rate: Math.round(conv * 100) / 100 },
+        email: {
+          campaigns: (emailCampaigns.data ?? []).length,
+          sent, delivered, opens, clicks, unsubs,
+          open_rate: delivered > 0 ? Math.round((opens / delivered) * 1000) / 10 : 0,
+          click_rate: delivered > 0 ? Math.round((clicks / delivered) * 1000) / 10 : 0,
+        },
+        meta: {
+          posts_published: (posts.data ?? []).filter((p) => p.status === "posted").length,
+          posts_drafts: (posts.data ?? []).filter((p) => p.status !== "posted").length,
+          campaigns_active: (campaigns.data ?? []).filter((c) => c.status === "active").length,
+          ad_spend: Math.round(adSpend * 100) / 100,
+          impressions: adImps,
+          clicks: adClicks,
+          ctr: adImps > 0 ? Math.round((adClicks / adImps) * 1000) / 10 : 0,
+        },
+        ugc: {
+          scripts: (scripts.data ?? []).length,
+          videos_ready: (videos.data ?? []).filter((v) => v.status === "ready").length,
+          videos_rendering: (videos.data ?? []).filter((v) => v.status !== "ready" && v.status !== "failed" && v.status !== "draft").length,
+        },
+        contacts: {
+          total: (contacts.data ?? []).filter((c) => c.status !== "suppressed").length,
+          new_this_period: (contacts.data ?? []).filter((c) => c.created_at && new Date(c.created_at) >= start).length,
+          unsubscribed: (contacts.data ?? []).filter((c) => !!c.unsubscribed_at).length,
+        },
+        credits: { spent_this_period: spent, top_actions: topActions },
+      };
+      return rollup;
+    } catch (err: any) {
+      console.error("[insights] Error:", err);
+      throw err;
+    }
   });
 
 export const listRecommendations = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ business_id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    await assertAccess(context.supabase, data.business_id);
-    const { data: rows } = await supabaseAdmin
-      .from("ai_recommendations")
-      .select("*")
-      .eq("business_id", data.business_id)
-      .order("created_at", { ascending: false })
-      .limit(20);
-    return rows ?? [];
+    try {
+      await assertAccess(context.supabase, data.business_id);
+      const { data: rows } = await supabaseAdmin
+        .from("ai_recommendations")
+        .select("*")
+        .eq("business_id", data.business_id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      return rows ?? [];
+    } catch (err: any) {
+      console.error("[insights] Error:", err);
+      throw err;
+    }
   });
 
 export const updateRecommendationStatus = createServerFn({ method: "POST" })
@@ -134,14 +144,19 @@ export const updateRecommendationStatus = createServerFn({ method: "POST" })
     status: z.enum(["open", "done", "dismissed"]),
   }).parse(input))
   .handler(async ({ data, context }) => {
-    await assertAccess(context.supabase, data.business_id);
-    const { error } = await supabaseAdmin
-      .from("ai_recommendations")
-      .update({ status: data.status })
-      .eq("id", data.id)
-      .eq("business_id", data.business_id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
+    try {
+      await assertAccess(context.supabase, data.business_id);
+      const { error } = await supabaseAdmin
+        .from("ai_recommendations")
+        .update({ status: data.status })
+        .eq("id", data.id)
+        .eq("business_id", data.business_id);
+      if (error) throw new Error(error.message);
+      return { ok: true };
+    } catch (err: any) {
+      console.error("[insights] Error:", err);
+      return { ok: false, error: err.message };
+    }
   });
 
 const RECO_SCHEMA = {

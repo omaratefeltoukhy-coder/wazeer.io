@@ -73,7 +73,7 @@ function NewCampaignPage() {
       if (sendNow) {
         setSendProgress({ sent: 0, total: 0 });
         const s = await send({ data: { id: r.id } });
-        setSendProgress({ sent: s.sent, total: s.total });
+        setSendProgress({ sent: s.sent ?? 0, total: s.total ?? 0 });
         if (s.mock) toast.warning(`Saved + simulated send to ${s.total} recipient(s). Add RESEND_API_KEY to send for real.`);
         else toast.success(`Sent to ${s.sent} recipient(s)${s.failed ? ` (${s.failed} failed)` : ""}`);
       } else if (scheduleLater) {

@@ -47,8 +47,19 @@ function PaymentLinksPage() {
   };
 
   useEffect(() => {
+    let mounted = true;
     load();
-    supabase.from("products").select("id,title,price,currency").then(({ data }) => setProducts(data ?? []));
+    (async () => {
+      try {
+        const { data } = await supabase.from("products").select("id,title,price,currency");
+        if (!mounted) return;
+        setProducts(data ?? []);
+      } catch {
+        if (!mounted) return;
+        setProducts([]);
+      }
+    })();
+    return () => { mounted = false; };
   }, []);
 
   const linkUrl = (code: string) => `${window.location.origin}/pay/${code}`;

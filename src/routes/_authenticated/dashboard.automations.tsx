@@ -11,8 +11,18 @@ export const Route = createFileRoute("/_authenticated/dashboard/automations")({
 function AutomationsList() {
   const [biz, setBiz] = useState<{ id: string; name: string }[] | null>(null);
   useEffect(() => {
-    supabase.from("businesses").select("id, name").order("created_at", { ascending: false })
-      .then(({ data }) => setBiz(data ?? []));
+    let mounted = true;
+    (async () => {
+      try {
+        const { data } = await supabase.from("businesses").select("id, name").order("created_at", { ascending: false });
+        if (!mounted) return;
+        setBiz(data ?? []);
+      } catch {
+        if (!mounted) return;
+        setBiz([]);
+      }
+    })();
+    return () => { mounted = false; };
   }, []);
   if (biz === null) return <div className="p-6"><Skeleton className="h-10 w-60 mb-4" /><Skeleton className="h-32 w-full rounded-2xl" /></div>;
   return (

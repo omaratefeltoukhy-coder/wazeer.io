@@ -184,27 +184,37 @@ export const listImages = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    let q = context.supabase
-      .from("media_assets")
-      .select("id, file_url, prompt, status, metadata_json, created_at")
-      .eq("business_id", data.business_id)
-      .eq("type", "image")
-      .order("created_at", { ascending: false })
-      .limit(data.limit);
-    if (data.cursor) q = q.lt("created_at", data.cursor);
-    const { data: rows, error } = await q;
-    if (error) throw new Error(error.message);
-    const next = rows && rows.length === data.limit ? (rows[rows.length - 1] as any).created_at : null;
-    return { items: rows ?? [], next_cursor: next };
+    try {
+      let q = context.supabase
+        .from("media_assets")
+        .select("id, file_url, prompt, status, metadata_json, created_at")
+        .eq("business_id", data.business_id)
+        .eq("type", "image")
+        .order("created_at", { ascending: false })
+        .limit(data.limit);
+      if (data.cursor) q = q.lt("created_at", data.cursor);
+      const { data: rows, error } = await q;
+      if (error) throw new Error(error.message);
+      const next = rows && rows.length === data.limit ? (rows[rows.length - 1] as any).created_at : null;
+      return { items: rows ?? [], next_cursor: next };
+    } catch (err: any) {
+      console.error("[imageGen] Error:", err);
+      throw err;
+    }
   });
 
 export const deleteImage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ image_id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("media_assets").delete().eq("id", data.image_id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
+    try {
+      const { error } = await context.supabase.from("media_assets").delete().eq("id", data.image_id);
+      if (error) throw new Error(error.message);
+      return { ok: true };
+    } catch (err: any) {
+      console.error("[imageGen] Error:", err);
+      return { ok: false, error: err.message };
+    }
   });
 
 export const useImageAsStorefrontHero = createServerFn({ method: "POST" })
@@ -213,24 +223,29 @@ export const useImageAsStorefrontHero = createServerFn({ method: "POST" })
     z.object({ image_id: z.string().uuid(), business_id: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { data: img } = await context.supabase
-      .from("media_assets")
-      .select("file_url, business_id")
-      .eq("id", data.image_id)
-      .maybeSingle();
-    if (!img?.file_url) throw new Error("Image not ready");
-    const { data: sf } = await context.supabase
-      .from("storefronts")
-      .select("id, content_json")
-      .eq("business_id", data.business_id)
-      .maybeSingle();
-    if (!sf) throw new Error("Storefront not found");
-    const content = { ...((sf.content_json ?? {}) as any) };
-    content.hero = { ...(content.hero ?? {}), image_url: img.file_url };
-    const { error } = await context.supabase
-      .from("storefronts")
-      .update({ content_json: content as any })
-      .eq("id", sf.id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
+    try {
+      const { data: img } = await context.supabase
+        .from("media_assets")
+        .select("file_url, business_id")
+        .eq("id", data.image_id)
+        .maybeSingle();
+      if (!img?.file_url) throw new Error("Image not ready");
+      const { data: sf } = await context.supabase
+        .from("storefronts")
+        .select("id, content_json")
+        .eq("business_id", data.business_id)
+        .maybeSingle();
+      if (!sf) throw new Error("Storefront not found");
+      const content = { ...((sf.content_json ?? {}) as any) };
+      content.hero = { ...(content.hero ?? {}), image_url: img.file_url };
+      const { error } = await context.supabase
+        .from("storefronts")
+        .update({ content_json: content as any })
+        .eq("id", sf.id);
+      if (error) throw new Error(error.message);
+      return { ok: true };
+    } catch (err: any) {
+      console.error("[imageGen] Error:", err);
+      return { ok: false, error: err.message };
+    }
   });
