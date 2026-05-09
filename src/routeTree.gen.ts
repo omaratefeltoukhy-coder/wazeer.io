@@ -18,6 +18,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UnsubscribeTokenRouteImport } from './routes/unsubscribe.$token'
 import { Route as SSlugRouteImport } from './routes/s.$slug'
+import { Route as PayCodeRouteImport } from './routes/pay.$code'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as PayCodeIndexRouteImport } from './routes/pay.$code.index'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard.index'
@@ -117,15 +118,20 @@ const SSlugRoute = SSlugRouteImport.update({
   path: '/s/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PayCodeRoute = PayCodeRouteImport.update({
+  id: '/pay/$code',
+  path: '/pay/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const PayCodeIndexRoute = PayCodeIndexRouteImport.update({
-  id: '/pay/$code/',
-  path: '/pay/$code/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => PayCodeRoute,
 } as any)
 const AuthenticatedDashboardIndexRoute =
   AuthenticatedDashboardIndexRouteImport.update({
@@ -447,6 +453,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
+  '/pay/$code': typeof PayCodeRouteWithChildren
   '/s/$slug': typeof SSlugRoute
   '/unsubscribe/$token': typeof UnsubscribeTokenRoute
   '/dashboard/ads': typeof AuthenticatedDashboardAdsRouteWithChildren
@@ -570,6 +577,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
+  '/pay/$code': typeof PayCodeRouteWithChildren
   '/s/$slug': typeof SSlugRoute
   '/unsubscribe/$token': typeof UnsubscribeTokenRoute
   '/_authenticated/dashboard/ads': typeof AuthenticatedDashboardAdsRouteWithChildren
@@ -636,6 +644,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/dashboard'
+    | '/pay/$code'
     | '/s/$slug'
     | '/unsubscribe/$token'
     | '/dashboard/ads'
@@ -758,6 +767,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/_authenticated/dashboard'
+    | '/pay/$code'
     | '/s/$slug'
     | '/unsubscribe/$token'
     | '/_authenticated/dashboard/ads'
@@ -823,10 +833,10 @@ export interface RootRouteChildren {
   RefundsRoute: typeof RefundsRoute
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
+  PayCodeRoute: typeof PayCodeRouteWithChildren
   SSlugRoute: typeof SSlugRoute
   UnsubscribeTokenRoute: typeof UnsubscribeTokenRoute
   ApiPublicBillingWebhookRoute: typeof ApiPublicBillingWebhookRoute
-  PayCodeIndexRoute: typeof PayCodeIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
@@ -896,6 +906,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pay/$code': {
+      id: '/pay/$code'
+      path: '/pay/$code'
+      fullPath: '/pay/$code'
+      preLoaderRoute: typeof PayCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -905,10 +922,10 @@ declare module '@tanstack/react-router' {
     }
     '/pay/$code/': {
       id: '/pay/$code/'
-      path: '/pay/$code'
+      path: '/'
       fullPath: '/pay/$code/'
       preLoaderRoute: typeof PayCodeIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof PayCodeRoute
     }
     '/_authenticated/dashboard/': {
       id: '/_authenticated/dashboard/'
@@ -1617,6 +1634,17 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface PayCodeRouteChildren {
+  PayCodeIndexRoute: typeof PayCodeIndexRoute
+}
+
+const PayCodeRouteChildren: PayCodeRouteChildren = {
+  PayCodeIndexRoute: PayCodeIndexRoute,
+}
+
+const PayCodeRouteWithChildren =
+  PayCodeRoute._addFileChildren(PayCodeRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
@@ -1625,10 +1653,10 @@ const rootRouteChildren: RootRouteChildren = {
   RefundsRoute: RefundsRoute,
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
+  PayCodeRoute: PayCodeRouteWithChildren,
   SSlugRoute: SSlugRoute,
   UnsubscribeTokenRoute: UnsubscribeTokenRoute,
   ApiPublicBillingWebhookRoute: ApiPublicBillingWebhookRoute,
-  PayCodeIndexRoute: PayCodeIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
