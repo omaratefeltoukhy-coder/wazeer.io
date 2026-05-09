@@ -140,9 +140,19 @@ function NavList({
 function AuthenticatedLayout() {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
+  const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data: ent } = useEntitlements();
   const [open, setOpen] = useState(false);
+  const showBack = pathname !== "/dashboard" && pathname !== "/";
+
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.history.back();
+    } else {
+      navigate({ to: "/dashboard" });
+    }
+  };
 
   // beforeLoad guarantees a session before this renders, but `useAuth` hydrates
   // asynchronously from the auth state listener. Show a loading state until both
