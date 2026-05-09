@@ -18,9 +18,18 @@ export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
     // Skip on the server — Supabase session lives in localStorage on the client.
     if (typeof window === "undefined") return;
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      // Defense-in-depth: never capture /login or /signup as the redirect target.
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        // Defense-in-depth: never capture /login or /signup as the redirect target.
+        const target = location.pathname.startsWith("/login") || location.pathname.startsWith("/signup")
+          ? "/dashboard"
+          : location.href;
+        throw redirect({ to: "/login", search: { redirect: target } });
+      }
+    } catch (err) {
+      // If getSession throws (e.g. corrupted localStorage), redirect to login.
+      if (err && typeof err === "object" && "to" in err) throw err; // re-throw TanStack redirects
       const target = location.pathname.startsWith("/login") || location.pathname.startsWith("/signup")
         ? "/dashboard"
         : location.href;
