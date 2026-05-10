@@ -12,6 +12,7 @@ import appCss from "../styles.css?url";
 import { AuthProvider } from "@/hooks/useAuth";
 import { Toaster } from "@/components/ui/sonner";
 import { ConfirmRoot } from "@/components/ui/confirm";
+import { supabase } from "@/integrations/supabase/client";
 
 function NotFoundComponent() {
   return (
@@ -70,6 +71,26 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
+async function handleOAuthCallback() {
+  if (typeof window === "undefined") return;
+  const hash = window.location.hash;
+  if (!hash || !hash.includes("access_token=")) return;
+
+  const params = new URLSearchParams(hash.substring(1));
+  const access_token = params.get("access_token");
+  const refresh_token = params.get("refresh_token");
+  if (!access_token) return;
+
+  const { error } = await supabase.auth.setSession({
+    access_token,
+    refresh_token: refresh_token || "",
+  });
+
+  if (!error) {
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  }
+}
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
@@ -95,6 +116,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
     ],
   }),
+  beforeLoad: async () => {
+    await handleOAuthCallback();
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
