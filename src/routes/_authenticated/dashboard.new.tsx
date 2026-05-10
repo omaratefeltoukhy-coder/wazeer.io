@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { generateBusiness } from "@/lib/ai/businessGen.functions";
+import { ensureUserWorkspace } from "@/lib/workspace.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -93,6 +94,7 @@ function NewBusinessWizard() {
   const [progressIdx, setProgressIdx] = useState(0);
   const [fileName, setFileName] = useState<string | null>(null);
   const generateFn = useServerFn(generateBusiness);
+  const ensureWorkspaceFn = useServerFn(ensureUserWorkspace);
 
   // Prefill from hero input
   useEffect(() => {
@@ -126,6 +128,16 @@ function NewBusinessWizard() {
     if (m?.workspace_id) {
       setWorkspaceId(m.workspace_id);
       return m.workspace_id;
+    }
+    // Fallback: create workspace if missing (handles edge cases where trigger didn't run)
+    try {
+      const result = await ensureWorkspaceFn({ data: undefined });
+      if (result.workspace_id) {
+        setWorkspaceId(result.workspace_id);
+        return result.workspace_id;
+      }
+    } catch (err: any) {
+      console.error("[loadWorkspace] ensureWorkspace failed:", err);
     }
     return null;
   };

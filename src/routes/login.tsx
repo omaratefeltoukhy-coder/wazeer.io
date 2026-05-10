@@ -40,10 +40,14 @@ function LoginPage() {
     navigate({ to: search.redirect });
   };
 
+  const siteUrl = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? window.location.origin
+    : "https://wazeer.io";
+
   const handleGoogle = async () => {
     setLoading(true);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin + search.redirect,
+      redirect_uri: siteUrl + search.redirect,
     });
     if (result.error) {
       setLoading(false);

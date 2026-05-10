@@ -31,6 +31,10 @@ function SignupPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const siteUrl = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? window.location.origin
+    : "https://wazeer.io";
+
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -38,7 +42,7 @@ function SignupPage() {
       email,
       password,
       options: {
-        emailRedirectTo: window.location.origin + "/dashboard",
+        emailRedirectTo: siteUrl + "/dashboard",
         data: { full_name: fullName },
       },
     });
@@ -51,7 +55,7 @@ function SignupPage() {
   const handleGoogle = async () => {
     setLoading(true);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin + "/dashboard",
+      redirect_uri: siteUrl + "/dashboard",
     });
     if (result.error) {
       setLoading(false);
