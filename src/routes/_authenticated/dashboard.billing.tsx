@@ -21,20 +21,18 @@ export const Route = createFileRoute("/_authenticated/dashboard/billing")({
 
 const ORDER: PlanId[] = ["trial", "starter", "growth", "pro", "agency"];
 
-// TODO: Replace these with actual Stripe Price IDs (price_xxx)
-// after running `npx tsx scripts/create-stripe-products.ts`
 const PLAN_PRICE_ID: Record<Exclude<PlanId, "trial">, string> = {
-  starter: "starter_monthly",
-  growth: "growth_monthly",
-  pro: "pro_monthly",
-  agency: "agency_monthly",
+  starter: "price_1TVXgvEb2f3QEdSfIRhoiDIU",
+  growth: "price_1TVXgxEb2f3QEdSfWojpfCM7",
+  pro: "price_1TVXgzEb2f3QEdSfEY6RzC1v",
+  agency: "price_1TVXh1Eb2f3QEdSfXbbFYGbT",
 };
 
 const PACK_PRICE_ID: Record<string, string> = {
-  pack_500: "pack_500",
-  pack_1500: "pack_1500",
-  pack_5000: "pack_5000",
-  pack_15000: "pack_15000",
+  pack_500: "price_1TVXh2Eb2f3QEdSfoKbQHqDp",
+  pack_1500: "price_1TVXh4Eb2f3QEdSf0UFnrzTz",
+  pack_5000: "price_1TVXh6Eb2f3QEdSfk5vkjfeD",
+  pack_15000: "price_1TVXh7Eb2f3QEdSf74LHlzjS",
 };
 
 type InvoiceRow = {
